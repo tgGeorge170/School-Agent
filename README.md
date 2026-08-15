@@ -1,27 +1,40 @@
 # School-Agent
 
-Small tools to help with CNC machining coursework at Tehnička Škola Gradiška.
+A small installable app (PWA) to help with CNC machining coursework at
+Tehnička Škola Gradiška, plus the reference notes it's built from.
 
-## Feeds & Speeds Calculator (`index.html`)
+## The app (`index.html`)
 
-A single self-contained HTML file — no install, no server, works offline.
-Just open `index.html` in a browser (or host it on GitHub Pages).
+Four tabs, navigable from a bottom bar like a phone app:
 
-Given operation (milling / drilling / turning), workpiece material, tool
-material, and tool/workpiece diameter, it estimates:
+- **🧮 Calculator** — feeds & speeds estimator. Given operation
+  (milling / drilling / turning), workpiece material, tool material, and
+  tool/workpiece diameter, it estimates **spindle speed (RPM)** and
+  **feed rate**. Metric by default with an Imperial toggle. Suggested chip
+  loads and cutting speeds are reasonable starting points for a school
+  shop, not a substitute for the tool manufacturer's data — always verify
+  and adjust from chip color, sound, and finish.
+- **🔤 G-code** — searchable G-code/M-code quick reference (generic/ISO,
+  Fanuc-compatible in most cases — verify exact codes against your
+  school's machine control).
+- **📘 3rd Year** — the official Republika Srpska curriculum for Техничар
+  CNC технологије, 3rd year, broken down by subject and module.
+- **📚 Resources** — textbooks, notes, and free CNC programming tutorials
+  worth cross-studying with.
 
-- **Spindle speed (RPM)** from the material's recommended cutting speed (Vc)
-- **Feed rate** from chip load per tooth (milling/drilling) or feed per
-  revolution (turning)
+### Running it
 
-Metric is the default (mm, m/min) with an Imperial toggle (in, SFM) for
-following English-language references. Suggested chip loads and cutting
-speeds are reasonable starting points for a school shop, not a substitute
-for the tool manufacturer's data — always verify and adjust from chip
-color, sound, and finish, especially on an unfamiliar material or setup.
+No build step — open `index.html` directly in a browser, or serve the
+folder over HTTP(S) (e.g. `python3 -m http.server`, or GitHub Pages) to
+get the full installable PWA experience: "Add to Home Screen" on your
+phone, and it keeps working offline afterward (service worker caches the
+whole app on first load). Opening the raw file (`file://`) works fine for
+everyday use, just without the install prompt or offline caching, since
+those require a real HTTP(S) origin.
 
-## Curriculum reference (`3rd-year-overview.md`)
+## Source files
 
-A breakdown of the official Republika Srpska curriculum for Техничар CNC
-технологије, 3rd year — subjects, modules, and topics, sourced from the
-Republički pedagoški zavod RS.
+- `3rd-year-overview.md` — the curriculum breakdown in longer form, with
+  sources.
+- `styles.css`, `app.js`, `manifest.json`, `sw.js` — the app shell,
+  calculator/reference logic, and PWA plumbing behind `index.html`.
