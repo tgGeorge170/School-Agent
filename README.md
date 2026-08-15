@@ -19,3 +19,9 @@ following English-language references. Suggested chip loads and cutting
 speeds are reasonable starting points for a school shop, not a substitute
 for the tool manufacturer's data — always verify and adjust from chip
 color, sound, and finish, especially on an unfamiliar material or setup.
+
+## Curriculum reference (`3rd-year-overview.md`)
+
+A breakdown of the official Republika Srpska curriculum for Техничар CNC
+технологије, 3rd year — subjects, modules, and topics, sourced from the
+Republički pedagoški zavod RS.
