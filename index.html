@@ -156,16 +156,90 @@
 </div>
 </div>
 
+<!-- ===================== JOURNAL ===================== -->
+<div class="tab-panel" id="journal">
+<div class="app">
+  <h1>Dnevnik</h1>
+  <div class="subtitle">Bilješke, testovi i ocjene — sve ostaje samo na ovom telefonu</div>
+
+  <div class="subtab-bar">
+    <button class="subtab active" data-sub="notes" type="button">Bilješke</button>
+    <button class="subtab" data-sub="tests" type="button">Testovi</button>
+    <button class="subtab" data-sub="grades" type="button">Ocjene</button>
+  </div>
+
+  <div class="subtab-panel active" id="sub-notes">
+    <form class="panel" id="note-form">
+      <div class="row">
+        <div>
+          <label>Datum</label>
+          <input type="date" id="note-date">
+        </div>
+        <div>
+          <label>Predmet (opciono)</label>
+          <input type="text" id="note-subject" list="subjects-list" placeholder="npr. CNC programiranje">
+        </div>
+      </div>
+      <label>Šta smo radili danas</label>
+      <textarea id="note-text" rows="3" placeholder="Kratke bilješke o gradivu, domaćem zadatku, čemu obratiti pažnju..."></textarea>
+      <button type="submit" class="add-btn">Dodaj bilješku</button>
+    </form>
+    <div id="notes-list"></div>
+  </div>
+
+  <div class="subtab-panel" id="sub-tests">
+    <form class="panel" id="test-form">
+      <div class="row">
+        <div>
+          <label>Predmet</label>
+          <input type="text" id="test-subject" list="subjects-list" placeholder="npr. Mašinski elementi">
+        </div>
+        <div>
+          <label>Datum</label>
+          <input type="date" id="test-date">
+        </div>
+      </div>
+      <label>Napomena (opciono)</label>
+      <input type="text" id="test-note" placeholder="npr. Pismeni iz zupčanika">
+      <button type="submit" class="add-btn">Dodaj test</button>
+    </form>
+    <div id="tests-list"></div>
+  </div>
+
+  <div class="subtab-panel" id="sub-grades">
+    <div class="results" id="grades-summary"></div>
+    <form class="panel" id="grade-form">
+      <div class="row">
+        <div>
+          <label>Predmet</label>
+          <input type="text" id="grade-subject" list="subjects-list" placeholder="npr. Tehnologija obrade">
+        </div>
+        <div>
+          <label>Ocjena</label>
+          <input type="number" id="grade-value" min="1" max="5" step="1" value="5">
+        </div>
+      </div>
+      <button type="submit" class="add-btn">Dodaj ocjenu</button>
+    </form>
+    <div id="grades-list"></div>
+  </div>
+
+  <datalist id="subjects-list"></datalist>
+</div>
+</div>
+
 <!-- ===================== BOTTOM NAV ===================== -->
 <nav class="tabbar">
   <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span><span data-i18n="nav.calc">Kalkulator</span></button>
   <button data-tab="gcode" type="button"><span class="icon">🔤</span><span data-i18n="nav.gcode">G-kod</span></button>
   <button data-tab="curriculum" type="button"><span class="icon">📘</span><span data-i18n="nav.curriculum">3. razred</span></button>
   <button data-tab="resources" type="button"><span class="icon">📚</span><span data-i18n="nav.resources">Resursi</span></button>
+  <button data-tab="journal" type="button"><span class="icon">📓</span><span>Dnevnik</span></button>
 </nav>
 
 <script src="i18n.js"></script>
 <script src="content-data.js"></script>
+<script src="journal.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -1,9 +1,10 @@
-const CACHE_NAME = "cnc-companion-v3";
+const CACHE_NAME = "cnc-companion-v4";
 const ASSETS = [
   "./index.html",
   "./styles.css",
   "./i18n.js",
   "./content-data.js",
+  "./journal.js",
   "./app.js",
   "./manifest.json",
   "./icons/icon-192.png",
