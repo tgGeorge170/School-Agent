@@ -149,7 +149,7 @@ const JOURNAL_SUBJECTS = [
         "BEGIN:VALARM",
         "ACTION:DISPLAY",
         "DESCRIPTION:Podsjetnik na test",
-        "TRIGGER:-P1D",
+        "TRIGGER:-P2D",
         "END:VALARM",
         "BEGIN:VALARM",
         "ACTION:DISPLAY",
