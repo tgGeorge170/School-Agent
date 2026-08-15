@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feeds &amp; Speeds Calculator</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --border: #dde1e6;
+    --text: #1c2128;
+    --muted: #5c636e;
+    --accent: #1a5fb4;
+    --accent-text: #ffffff;
+    --result-bg: #eef5ff;
+    --result-border: #b8d4f5;
+    --warn-bg: #fff6e5;
+    --warn-border: #f0d38a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181d;
+      --panel: #1e2128;
+      --border: #33383f;
+      --text: #e8eaed;
+      --muted: #9aa1ab;
+      --accent: #4d94ff;
+      --accent-text: #0b1220;
+      --result-bg: #10233f;
+      --result-border: #2c5a94;
+      --warn-bg: #332a10;
+      --warn-border: #7a5c1e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 560px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 0.2rem 0 0.1rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 1.2rem;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+  .row > div { flex: 1; }
+  label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  select, input[type=number] {
+    width: 100%;
+    padding: 0.55rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+  }
+  .unit-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .unit-toggle button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .unit-toggle button.active {
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+  .hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+  .results {
+    background: var(--result-bg);
+    border: 1px solid var(--result-border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.4rem 0;
+  }
+  .result-row + .result-row {
+    border-top: 1px dashed var(--result-border);
+  }
+  .result-label {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .result-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .result-value .unit {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-left: 0.2rem;
+  }
+  .note {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-top: 1rem;
+    line-height: 1.4;
+  }
+  .field-group {
+    display: none;
+  }
+  .field-group.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Feeds &amp; Speeds Calculator</h1>
+  <div class="subtitle">Quick RPM &amp; feed-rate estimates for milling, drilling, and turning</div>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label>Units</label>
+        <div class="unit-toggle">
+          <button id="unit-metric" class="active" type="button">Metric</button>
+          <button id="unit-imperial" type="button">Imperial</button>
+        </div>
+      </div>
+      <div>
+        <label>Operation</label>
+        <select id="operation">
+          <option value="milling">Milling</option>
+          <option value="drilling">Drilling</option>
+          <option value="turning">Turning</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Material</label>
+        <select id="material"></select>
+      </div>
+      <div>
+        <label>Tool Material</label>
+        <select id="tool-material">
+          <option value="carbide">Carbide</option>
+          <option value="hss">HSS</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label id="diameter-label">Tool Diameter</label>
+        <input type="number" id="diameter" min="0.1" step="0.1" value="6">
+        <div class="hint" id="diameter-unit">mm</div>
+      </div>
+      <div id="flutes-group">
+        <label>Flutes</label>
+        <input type="number" id="flutes" min="1" step="1" value="2">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Pass</label>
+        <select id="pass-type">
+          <option value="roughing">Roughing</option>
+          <option value="finishing">Finishing</option>
+        </select>
+      </div>
+      <div class="field-group" id="chipload-group">
+        <label id="chipload-label">Chip Load / Tooth</label>
+        <input type="number" id="chipload" min="0.001" step="0.001" value="0.05">
+        <div class="hint" id="chipload-unit">mm/tooth</div>
+      </div>
+      <div class="field-group" id="feedrev-group">
+        <label>Feed / Revolution</label>
+        <input type="number" id="feedrev" min="0.01" step="0.01" value="0.15">
+        <div class="hint" id="feedrev-unit">mm/rev</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="result-row">
+      <span class="result-label">Spindle Speed</span>
+      <span class="result-value"><span id="out-rpm">0</span><span class="unit">RPM</span></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Feed Rate</span>
+      <span class="result-value"><span id="out-feed">0</span><span class="unit" id="out-feed-unit">mm/min</span></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Cutting Speed Used</span>
+      <span class="result-value"><span id="out-vc">0</span><span class="unit" id="out-vc-unit">m/min</span></span>
+    </div>
+  </div>
+
+  <div class="note">
+    These are starting-point values, not a guarantee — always check your tool manufacturer's chart, start conservative on a new setup, and adjust from chip color/sound/finish. Recalculate after material or tool changes; never rely on this alone for an unfamiliar job.
+  </div>
+</div>
+
+<script>
+(function () {
+  // Vc = recommended cutting speed for carbide tooling, m/min (roughing baseline)
+  // feedFactor = relative multiplier applied to the base chip-load / feed-per-rev formula
+  const MATERIALS = {
+    aluminum:  { label: "Aluminum (6061)",        vc: 300, feedFactor: 1.3 },
+    brass:     { label: "Brass",                  vc: 150, feedFactor: 1.1 },
+    mildsteel: { label: "Mild Steel (S235/1018)",  vc: 120, feedFactor: 1.0 },
+    stainless: { label: "Stainless Steel (304)",   vc: 60,  feedFactor: 0.7 },
+    toolsteel: { label: "Tool Steel (pre-hard)",   vc: 55,  feedFactor: 0.6 },
+    castiron:  { label: "Cast Iron",               vc: 90,  feedFactor: 0.9 },
+    plastic:   { label: "Plastic (Acetal/POM)",    vc: 200, feedFactor: 1.5 },
+    titanium:  { label: "Titanium",                vc: 45,  feedFactor: 0.5 },
+  };
+
+  const HSS_FACTOR = 0.4;      // HSS runs roughly 40% of carbide cutting speed
+  const FINISH_FACTOR = 0.4;   // finishing passes use lighter feed than roughing
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    unitMetric: $("unit-metric"),
+    unitImperial: $("unit-imperial"),
+    operation: $("operation"),
+    material: $("material"),
+    toolMaterial: $("tool-material"),
+    diameter: $("diameter"),
+    diameterLabel: $("diameter-label"),
+    diameterUnit: $("diameter-unit"),
+    flutesGroup: $("flutes-group"),
+    flutes: $("flutes"),
+    passType: $("pass-type"),
+    chiploadGroup: $("chipload-group"),
+    chipload: $("chipload"),
+    chiploadLabel: $("chipload-label"),
+    chiploadUnit: $("chipload-unit"),
+    feedrevGroup: $("feedrev-group"),
+    feedrev: $("feedrev"),
+    feedrevUnit: $("feedrev-unit"),
+    outRpm: $("out-rpm"),
+    outFeed: $("out-feed"),
+    outFeedUnit: $("out-feed-unit"),
+    outVc: $("out-vc"),
+    outVcUnit: $("out-vc-unit"),
+  };
+
+  let unit = "metric"; // or "imperial"
+  let userEditedChipload = false;
+  let userEditedFeedrev = false;
+
+  for (const key in MATERIALS) {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = MATERIALS[key].label;
+    els.material.appendChild(opt);
+  }
+
+  function mmToIn(mm) { return mm / 25.4; }
+  function inToMm(inch) { return inch * 25.4; }
+
+  // Suggested base chip load / feed-per-rev in mm, before material & pass factors
+  function baseChiploadMm(diameterMm) {
+    return 0.018 + 0.0083 * diameterMm; // fitted to typical mm/tooth shop tables
+  }
+  function baseFeedRevMm() {
+    return 0.15; // typical light-roughing starting feed, mm/rev
+  }
+
+  function setUnit(newUnit) {
+    if (newUnit === unit) return;
+    // convert current diameter value across unit systems
+    const d = parseFloat(els.diameter.value) || 0;
+    els.diameter.value = newUnit === "imperial"
+      ? round(mmToIn(unit === "metric" ? d : inToMm(d)), 3)
+      : round(unit === "imperial" ? inToMm(d) : d, 2);
+
+    unit = newUnit;
+    els.unitMetric.classList.toggle("active", unit === "metric");
+    els.unitImperial.classList.toggle("active", unit === "imperial");
+    userEditedChipload = false;
+    userEditedFeedrev = false;
+    updateLabelsAndUnits();
+    recalc();
+  }
+
+  function updateLabelsAndUnits() {
+    const op = els.operation.value;
+    els.diameterLabel.textContent = op === "turning" ? "Workpiece Diameter" : "Tool Diameter";
+    els.diameterUnit.textContent = unit === "metric" ? "mm" : "in";
+    els.chiploadUnit.textContent = unit === "metric" ? "mm/tooth" : "in/tooth";
+    els.feedrevUnit.textContent = unit === "metric" ? "mm/rev" : "in/rev";
+    els.outFeedUnit.textContent = unit === "metric" ? "mm/min" : "in/min";
+    els.outVcUnit.textContent = unit === "metric" ? "m/min" : "SFM";
+
+    const isTurning = op === "turning";
+    els.flutesGroup.style.display = isTurning ? "none" : "block";
+    els.chiploadGroup.classList.toggle("active", !isTurning);
+    els.feedrevGroup.classList.toggle("active", isTurning);
+  }
+
+  function round(n, digits) {
+    const f = Math.pow(10, digits);
+    return Math.round(n * f) / f;
+  }
+
+  function diameterMm() {
+    const d = parseFloat(els.diameter.value) || 0;
+    return unit === "metric" ? d : inToMm(d);
+  }
+
+  function suggestChiploadAndFeedrev() {
+    const mat = MATERIALS[els.material.value];
+    const passFactor = els.passType.value === "finishing" ? FINISH_FACTOR : 1.0;
+
+    if (!userEditedChipload) {
+      const mm = baseChiploadMm(diameterMm()) * mat.feedFactor * passFactor;
+      els.chipload.value = unit === "metric" ? round(mm, 3) : round(mmToIn(mm), 4);
+    }
+    if (!userEditedFeedrev) {
+      const mm = baseFeedRevMm() * mat.feedFactor * passFactor;
+      els.feedrev.value = unit === "metric" ? round(mm, 3) : round(mmToIn(mm), 4);
+    }
+  }
+
+  function recalc() {
+    suggestChiploadAndFeedrev();
+
+    const mat = MATERIALS[els.material.value];
+    const toolFactor = els.toolMaterial.value === "hss" ? HSS_FACTOR : 1.0;
+    const vcMetersPerMin = mat.vc * toolFactor;
+
+    const dMm = diameterMm();
+    let rpm = 0;
+    if (dMm > 0) {
+      rpm = (vcMetersPerMin * 1000) / (Math.PI * dMm);
+    }
+    rpm = Math.max(0, Math.round(rpm));
+
+    const op = els.operation.value;
+    let feedMmPerMin;
+    if (op === "turning") {
+      const feedRevMm = unit === "metric"
+        ? (parseFloat(els.feedrev.value) || 0)
+        : inToMm(parseFloat(els.feedrev.value) || 0);
+      feedMmPerMin = rpm * feedRevMm;
+    } else {
+      const flutes = Math.max(1, parseInt(els.flutes.value, 10) || 1);
+      const chiploadMm = unit === "metric"
+        ? (parseFloat(els.chipload.value) || 0)
+        : inToMm(parseFloat(els.chipload.value) || 0);
+      feedMmPerMin = rpm * chiploadMm * flutes;
+    }
+
+    els.outRpm.textContent = rpm.toLocaleString();
+    const feedDisplay = unit === "metric" ? feedMmPerMin : mmToIn(feedMmPerMin);
+    els.outFeed.textContent = round(feedDisplay, unit === "metric" ? 0 : 2).toLocaleString();
+
+    const vcDisplay = unit === "metric" ? vcMetersPerMin : vcMetersPerMin / 0.3048;
+    els.outVc.textContent = round(vcDisplay, 0).toLocaleString();
+  }
+
+  els.unitMetric.addEventListener("click", () => setUnit("metric"));
+  els.unitImperial.addEventListener("click", () => setUnit("imperial"));
+  els.operation.addEventListener("change", () => { updateLabelsAndUnits(); recalc(); });
+  els.material.addEventListener("change", () => { userEditedChipload = false; userEditedFeedrev = false; recalc(); });
+  els.toolMaterial.addEventListener("change", recalc);
+  els.passType.addEventListener("change", () => { userEditedChipload = false; userEditedFeedrev = false; recalc(); });
+  els.diameter.addEventListener("input", recalc);
+  els.flutes.addEventListener("input", recalc);
+  els.chipload.addEventListener("input", () => { userEditedChipload = true; recalc(); });
+  els.feedrev.addEventListener("input", () => { userEditedFeedrev = true; recalc(); });
+
+  updateLabelsAndUnits();
+  recalc();
+})();
+</script>
+</body>
+</html>
