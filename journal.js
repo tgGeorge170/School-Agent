@@ -114,12 +114,80 @@ const JOURNAL_SUBJECTS = [
     renderNotes();
   });
 
+  // ---------- Calendar export (.ics) ----------
+  // No backend, no push service — hand the reminder off to the phone's own
+  // calendar app, which can notify even when this PWA isn't open.
+  function pad(n) {
+    return String(n).padStart(2, "0");
+  }
+  function icsEscape(str) {
+    return String(str || "").replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
+  }
+  function icsDateTime(iso, hh, mm) {
+    const [y, m, d] = iso.split("-");
+    return `${y}${m}${d}T${pad(hh)}${pad(mm)}00`;
+  }
+  function icsNowUtc() {
+    const d = new Date();
+    return (
+      d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) +
+      "T" + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + "Z"
+    );
+  }
+  function buildIcs(tests) {
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CNC Skolski Pomocnik//Dnevnik//SR", "CALSCALE:GREGORIAN"];
+    tests.forEach((tst) => {
+      const summary = icsEscape((tst.subject || "Test") + " - test");
+      lines.push(
+        "BEGIN:VEVENT",
+        `UID:${tst.id}@cnc-companion.local`,
+        `DTSTAMP:${icsNowUtc()}`,
+        `DTSTART:${icsDateTime(tst.date, 8, 0)}`,
+        `DTEND:${icsDateTime(tst.date, 8, 30)}`,
+        `SUMMARY:${summary}`,
+        tst.note ? `DESCRIPTION:${icsEscape(tst.note)}` : null,
+        "BEGIN:VALARM",
+        "ACTION:DISPLAY",
+        "DESCRIPTION:Podsjetnik na test",
+        "TRIGGER:-P1D",
+        "END:VALARM",
+        "BEGIN:VALARM",
+        "ACTION:DISPLAY",
+        "DESCRIPTION:Podsjetnik na test",
+        "TRIGGER:-PT1H",
+        "END:VALARM",
+        "END:VEVENT"
+      );
+    });
+    lines.push("END:VCALENDAR");
+    return lines.filter(Boolean).join("\r\n");
+  }
+  function slugForFilename(str) {
+    const map = { š: "s", č: "c", ć: "c", ž: "z", đ: "dj", Š: "S", Č: "C", Ć: "C", Ž: "Z", Đ: "Dj" };
+    return String(str || "test")
+      .replace(/[šćčžđŠĆČŽĐ]/g, (ch) => map[ch] || ch)
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9-]/g, "");
+  }
+  function downloadIcs(filename, content) {
+    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
   // ---------- Tests ----------
   const testForm = document.getElementById("test-form");
   const testSubject = document.getElementById("test-subject");
   const testDate = document.getElementById("test-date");
   const testNote = document.getElementById("test-note");
   const testsList = document.getElementById("tests-list");
+  const exportAllBtn = document.getElementById("export-tests-btn");
 
   function daysUntil(iso) {
     const today = new Date(todayIso() + "T00:00:00");
@@ -149,15 +217,27 @@ const JOURNAL_SUBJECTS = [
         <div class="journal-item-head">
           <span class="journal-subject">${tst.subject || "Test"}</span>
           <span class="journal-badge ${badgeClass}">${countdownLabel(days)}</span>
+          <button class="journal-cal" type="button" aria-label="Dodaj u kalendar">📅</button>
           <button class="journal-del" type="button" aria-label="Obriši">✕</button>
         </div>
         <div class="journal-text">${fmtDate(tst.date)}${tst.note ? " — " + tst.note : ""}</div>
       `;
+      div.querySelector(".journal-cal").addEventListener("click", () => {
+        downloadIcs(`test-${slugForFilename(tst.subject)}.ics`, buildIcs([tst]));
+      });
       div.querySelector(".journal-del").addEventListener("click", () => {
         save(TESTS_KEY, load(TESTS_KEY).filter((x) => x.id !== tst.id));
         renderTests();
       });
       testsList.appendChild(div);
+    });
+  }
+
+  if (exportAllBtn) {
+    exportAllBtn.addEventListener("click", () => {
+      const upcoming = load(TESTS_KEY).filter((tst) => daysUntil(tst.date) >= 0);
+      if (upcoming.length === 0) return;
+      downloadIcs("testovi.ics", buildIcs(upcoming));
     });
   }
 

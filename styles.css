@@ -308,6 +308,12 @@ ul.module-topics li { margin-bottom: 0.15rem; }
   font-size: 0.92rem;
   cursor: pointer;
 }
+.add-btn.secondary {
+  background: var(--panel);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  margin-top: 0;
+}
 
 .journal-item {
   background: var(--panel);
@@ -342,7 +348,7 @@ ul.module-topics li { margin-bottom: 0.15rem; }
 .badge-normal { background: var(--result-bg); color: var(--accent); border: 1px solid var(--result-border); }
 .badge-soon { background: var(--warn-bg); color: var(--text); border: 1px solid var(--warn-border); }
 .badge-past { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
-.journal-del {
+.journal-del, .journal-cal {
   border: none;
   background: none;
   color: var(--muted);
