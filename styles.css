@@ -39,7 +39,6 @@ body {
   display: flex;
   justify-content: center;
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
-  padding-top: calc(44px + env(safe-area-inset-top));
 }
 .app {
   width: 100%;
@@ -168,37 +167,6 @@ select, input[type=number], input[type=search] {
 /* Tab panels */
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-
-/* Language toggle (fixed top bar) */
-.lang-toggle {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: calc(0.4rem + env(safe-area-inset-top)) 0.6rem 0.4rem;
-  background: var(--nav-bg);
-  border-bottom: 1px solid var(--border);
-  z-index: 20;
-}
-.lang-toggle button {
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 0.25rem 0.9rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-}
-.lang-toggle button.active {
-  background: var(--accent);
-  color: var(--accent-text);
-  border-color: var(--accent);
-}
 
 /* Bottom nav */
 .tabbar {
