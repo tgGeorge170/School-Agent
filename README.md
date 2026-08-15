@@ -5,7 +5,9 @@ Tehnička Škola Gradiška, plus the reference notes it's built from.
 
 ## The app (`index.html`)
 
-Four tabs, navigable from a bottom bar like a phone app:
+Serbian (Latin) by default, with an EN toggle pinned to the top of every
+screen — the choice is remembered between visits. Four tabs, navigable
+from a bottom bar like a phone app:
 
 - **🧮 Calculator** — feeds & speeds estimator. Given operation
   (milling / drilling / turning), workpiece material, tool material, and
@@ -38,3 +40,7 @@ those require a real HTTP(S) origin.
   sources.
 - `styles.css`, `app.js`, `manifest.json`, `sw.js` — the app shell,
   calculator/reference logic, and PWA plumbing behind `index.html`.
+- `i18n.js`, `content-data.js` — the SR/EN dictionary and bilingual
+  content (materials, G-codes, curriculum, resources). The Serbian
+  curriculum text uses the actual topic lists from the official document,
+  not a translation of the English summary.

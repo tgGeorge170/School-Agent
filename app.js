@@ -14,17 +14,6 @@
 
 // ---------- Feeds & Speeds calculator ----------
 (function () {
-  const MATERIALS = {
-    aluminum:  { label: "Aluminum (6061)",        vc: 300, feedFactor: 1.3 },
-    brass:     { label: "Brass",                  vc: 150, feedFactor: 1.1 },
-    mildsteel: { label: "Mild Steel (S235/1018)",  vc: 120, feedFactor: 1.0 },
-    stainless: { label: "Stainless Steel (304)",   vc: 60,  feedFactor: 0.7 },
-    toolsteel: { label: "Tool Steel (pre-hard)",   vc: 55,  feedFactor: 0.6 },
-    castiron:  { label: "Cast Iron",               vc: 90,  feedFactor: 0.9 },
-    plastic:   { label: "Plastic (Acetal/POM)",    vc: 200, feedFactor: 1.5 },
-    titanium:  { label: "Titanium",                vc: 45,  feedFactor: 0.5 },
-  };
-
   const HSS_FACTOR = 0.4;
   const FINISH_FACTOR = 0.4;
 
@@ -61,11 +50,16 @@
   let userEditedChipload = false;
   let userEditedFeedrev = false;
 
-  for (const key in MATERIALS) {
-    const opt = document.createElement("option");
-    opt.value = key;
-    opt.textContent = MATERIALS[key].label;
-    els.material.appendChild(opt);
+  function populateMaterials() {
+    const prevValue = els.material.value;
+    els.material.innerHTML = "";
+    for (const key in MATERIALS) {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = MATERIALS[key].label[currentLang] || MATERIALS[key].label.en;
+      els.material.appendChild(opt);
+    }
+    if (prevValue && MATERIALS[prevValue]) els.material.value = prevValue;
   }
 
   function mmToIn(mm) { return mm / 25.4; }
@@ -91,7 +85,7 @@
 
   function updateLabelsAndUnits() {
     const op = els.operation.value;
-    els.diameterLabel.textContent = op === "turning" ? "Workpiece Diameter" : "Tool Diameter";
+    els.diameterLabel.textContent = op === "turning" ? t("calc.workpieceDiameter") : t("calc.toolDiameter");
     els.diameterUnit.textContent = unit === "metric" ? "mm" : "in";
     els.chiploadUnit.textContent = unit === "metric" ? "mm/tooth" : "in/tooth";
     els.feedrevUnit.textContent = unit === "metric" ? "mm/rev" : "in/rev";
@@ -176,58 +170,19 @@
   els.chipload.addEventListener("input", () => { userEditedChipload = true; recalc(); });
   els.feedrev.addEventListener("input", () => { userEditedFeedrev = true; recalc(); });
 
+  document.addEventListener("languagechange", () => {
+    populateMaterials();
+    updateLabelsAndUnits();
+    recalc();
+  });
+
+  populateMaterials();
   updateLabelsAndUnits();
   recalc();
 })();
 
 // ---------- G-code / M-code reference ----------
 (function () {
-  const GCODES = [
-    { code: "G00", cat: "Positioning", desc: "Rapid positioning (rapid traverse, no cutting)" },
-    { code: "G01", cat: "Interpolation", desc: "Linear interpolation — straight-line feed move" },
-    { code: "G02", cat: "Interpolation", desc: "Circular interpolation, clockwise (CW)" },
-    { code: "G03", cat: "Interpolation", desc: "Circular interpolation, counter-clockwise (CCW)" },
-    { code: "G04", cat: "Program control", desc: "Dwell — pause for a programmed time" },
-    { code: "G17", cat: "Plane selection", desc: "Select XY plane" },
-    { code: "G18", cat: "Plane selection", desc: "Select XZ plane (typical lathe default)" },
-    { code: "G19", cat: "Plane selection", desc: "Select YZ plane" },
-    { code: "G20", cat: "Units", desc: "Inch units (Fanuc-style; some controls use G70)" },
-    { code: "G21", cat: "Units", desc: "Metric units (Fanuc-style; some controls use G71)" },
-    { code: "G28", cat: "Positioning", desc: "Return to reference/home position" },
-    { code: "G40", cat: "Compensation", desc: "Cutter radius compensation cancel" },
-    { code: "G41", cat: "Compensation", desc: "Cutter radius compensation, left of path" },
-    { code: "G42", cat: "Compensation", desc: "Cutter radius compensation, right of path" },
-    { code: "G43", cat: "Compensation", desc: "Tool length compensation, positive" },
-    { code: "G49", cat: "Compensation", desc: "Tool length compensation cancel" },
-    { code: "G53", cat: "Coordinate systems", desc: "Move in machine coordinate system (non-modal)" },
-    { code: "G54–G59", cat: "Coordinate systems", desc: "Select work coordinate system 1–6" },
-    { code: "G80", cat: "Canned cycles", desc: "Cancel canned (fixed) cycle" },
-    { code: "G81", cat: "Canned cycles", desc: "Simple drilling cycle" },
-    { code: "G82", cat: "Canned cycles", desc: "Drilling with dwell (spot/counterbore)" },
-    { code: "G83", cat: "Canned cycles", desc: "Peck drilling cycle (deep holes, chip breaking)" },
-    { code: "G84", cat: "Canned cycles", desc: "Tapping cycle" },
-    { code: "G90", cat: "Positioning mode", desc: "Absolute positioning — coordinates from part zero" },
-    { code: "G91", cat: "Positioning mode", desc: "Incremental positioning — coordinates from last position" },
-    { code: "G92", cat: "Coordinate systems", desc: "Set/shift the work coordinate origin" },
-    { code: "G94", cat: "Feed mode", desc: "Feed per minute (mm/min or in/min)" },
-    { code: "G95", cat: "Feed mode", desc: "Feed per revolution (mm/rev or in/rev) — common on lathes" },
-    { code: "G96", cat: "Spindle mode", desc: "Constant surface speed (CSS) control — on (turning)" },
-    { code: "G97", cat: "Spindle mode", desc: "Constant surface speed cancel — direct RPM" },
-  ];
-
-  const MCODES = [
-    { code: "M00", cat: "Program control", desc: "Program stop (unconditional) — machine halts, press cycle start to resume" },
-    { code: "M01", cat: "Program control", desc: "Optional stop — only halts if operator has it enabled" },
-    { code: "M02", cat: "Program control", desc: "End of program" },
-    { code: "M03", cat: "Spindle", desc: "Spindle start, clockwise (CW)" },
-    { code: "M04", cat: "Spindle", desc: "Spindle start, counter-clockwise (CCW)" },
-    { code: "M05", cat: "Spindle", desc: "Spindle stop" },
-    { code: "M06", cat: "Tooling", desc: "Tool change" },
-    { code: "M08", cat: "Coolant", desc: "Coolant on" },
-    { code: "M09", cat: "Coolant", desc: "Coolant off" },
-    { code: "M30", cat: "Program control", desc: "End of program, reset to the start" },
-  ];
-
   const listEl = document.getElementById("gcode-list");
   const searchEl = document.getElementById("gcode-search");
   if (!listEl) return;
@@ -236,36 +191,123 @@
     const q = (filter || "").trim().toLowerCase();
     listEl.innerHTML = "";
 
-    function renderGroup(title, items) {
-      const filtered = items.filter(
-        (it) => !q || it.code.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q) || it.cat.toLowerCase().includes(q)
-      );
+    function renderGroup(titleKey, items) {
+      const filtered = items.filter((it) => {
+        const cat = it.cat[currentLang] || it.cat.en;
+        const desc = it.desc[currentLang] || it.desc.en;
+        return !q || it.code.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || cat.toLowerCase().includes(q);
+      });
       if (filtered.length === 0) return;
       const h = document.createElement("div");
       h.className = "section-heading";
-      h.textContent = title;
+      h.textContent = t(titleKey);
       listEl.appendChild(h);
       filtered.forEach((it) => {
+        const cat = it.cat[currentLang] || it.cat.en;
+        const desc = it.desc[currentLang] || it.desc.en;
         const row = document.createElement("div");
         row.className = "gcode-item";
-        row.innerHTML = `<span class="gcode-code">${it.code}</span><span class="gcode-desc">${it.desc}<div class="gcode-cat">${it.cat}</div></span>`;
+        row.innerHTML = `<span class="gcode-code">${it.code}</span><span class="gcode-desc">${desc}<div class="gcode-cat">${cat}</div></span>`;
         listEl.appendChild(row);
       });
     }
 
-    renderGroup("G-codes", GCODES);
-    renderGroup("M-codes", MCODES);
+    renderGroup("gcode.gcodesHeading", GCODES);
+    renderGroup("gcode.mcodesHeading", MCODES);
 
     if (listEl.children.length === 0) {
       const empty = document.createElement("div");
       empty.className = "hint";
-      empty.textContent = "No matches.";
+      empty.textContent = t("gcode.noResults");
       listEl.appendChild(empty);
     }
   }
 
   searchEl.addEventListener("input", () => render(searchEl.value));
+  document.addEventListener("languagechange", () => render(searchEl.value));
   render("");
+})();
+
+// ---------- Curriculum ----------
+(function () {
+  const listEl = document.getElementById("curriculum-list");
+  if (!listEl) return;
+
+  function render() {
+    listEl.innerHTML = "";
+    CURRICULUM.forEach((subject) => {
+      const details = document.createElement("details");
+      details.className = "subject";
+      if (subject.open) details.open = true;
+
+      const summary = document.createElement("summary");
+      summary.textContent = subject.name[currentLang] || subject.name.en;
+      details.appendChild(summary);
+
+      subject.modules.forEach((mod) => {
+        const modDiv = document.createElement("div");
+        modDiv.className = "module";
+        const title = mod.title[currentLang] || mod.title.en;
+        if (title) {
+          const titleDiv = document.createElement("div");
+          titleDiv.className = "module-title";
+          titleDiv.textContent = title;
+          modDiv.appendChild(titleDiv);
+        }
+        const ul = document.createElement("ul");
+        ul.className = "module-topics";
+        (mod.topics[currentLang] || mod.topics.en).forEach((topic) => {
+          const li = document.createElement("li");
+          li.textContent = topic;
+          ul.appendChild(li);
+        });
+        modDiv.appendChild(ul);
+        details.appendChild(modDiv);
+      });
+
+      listEl.appendChild(details);
+    });
+  }
+
+  document.addEventListener("languagechange", render);
+  render();
+})();
+
+// ---------- Resources ----------
+(function () {
+  const textbooksEl = document.getElementById("resources-textbooks");
+  const cncEl = document.getElementById("resources-cnc");
+  const tipsEl = document.getElementById("resources-tips");
+  if (!textbooksEl) return;
+
+  function renderLinks(container, items) {
+    container.innerHTML = "";
+    items.forEach((item) => {
+      const div = document.createElement("div");
+      div.className = "resource-item";
+      const desc = item.desc[currentLang] || item.desc.en;
+      div.innerHTML = `<a href="${item.url}" target="_blank" rel="noopener">${item.title}</a><div class="desc">${desc}</div>`;
+      container.appendChild(div);
+    });
+  }
+
+  function renderTips() {
+    tipsEl.innerHTML = "";
+    RESOURCES.tips.forEach((tip) => {
+      const li = document.createElement("li");
+      li.innerHTML = tip[currentLang] || tip.en;
+      tipsEl.appendChild(li);
+    });
+  }
+
+  function render() {
+    renderLinks(textbooksEl, RESOURCES.textbooks);
+    renderLinks(cncEl, RESOURCES.cnc);
+    renderTips();
+  }
+
+  document.addEventListener("languagechange", render);
+  render();
 })();
 
 // ---------- Service worker registration ----------

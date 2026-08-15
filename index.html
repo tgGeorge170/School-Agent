@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="sr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>CNC School Companion</title>
+<title>CNC Školski Pomoćnik</title>
 <meta name="theme-color" content="#1a5fb4">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -12,72 +12,77 @@
 </head>
 <body>
 
+<div class="lang-toggle">
+  <button data-lang="sr" type="button">SR</button>
+  <button data-lang="en" type="button">EN</button>
+</div>
+
 <!-- ===================== CALCULATOR ===================== -->
 <div class="tab-panel active" id="calc">
 <div class="app">
-  <h1>Feeds &amp; Speeds Calculator</h1>
-  <div class="subtitle">Quick RPM &amp; feed-rate estimates for milling, drilling, and turning</div>
+  <h1 data-i18n="calc.title">Kalkulator brzina i posmaka</h1>
+  <div class="subtitle" data-i18n="calc.subtitle">Brza procjena broja obrtaja i posmaka za glodanje, bušenje i struganje</div>
 
   <div class="panel">
     <div class="row">
       <div>
-        <label>Units</label>
+        <label data-i18n="calc.units">Jedinice</label>
         <div class="unit-toggle">
-          <button id="unit-metric" class="active" type="button">Metric</button>
-          <button id="unit-imperial" type="button">Imperial</button>
+          <button id="unit-metric" class="active" type="button" data-i18n="calc.metric">Metrične</button>
+          <button id="unit-imperial" type="button" data-i18n="calc.imperial">Imperijalne</button>
         </div>
       </div>
       <div>
-        <label>Operation</label>
+        <label data-i18n="calc.operation">Operacija</label>
         <select id="operation">
-          <option value="milling">Milling</option>
-          <option value="drilling">Drilling</option>
-          <option value="turning">Turning</option>
+          <option value="milling" data-i18n="calc.opMilling">Glodanje</option>
+          <option value="drilling" data-i18n="calc.opDrilling">Bušenje</option>
+          <option value="turning" data-i18n="calc.opTurning">Struganje</option>
         </select>
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>Material</label>
+        <label data-i18n="calc.material">Materijal</label>
         <select id="material"></select>
       </div>
       <div>
-        <label>Tool Material</label>
+        <label data-i18n="calc.toolMaterial">Materijal alata</label>
         <select id="tool-material">
-          <option value="carbide">Carbide</option>
-          <option value="hss">HSS</option>
+          <option value="carbide" data-i18n="calc.carbide">Karbid</option>
+          <option value="hss" data-i18n="calc.hss">Brzorezni čelik (HSS)</option>
         </select>
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label id="diameter-label">Tool Diameter</label>
+        <label id="diameter-label" data-i18n="calc.toolDiameter">Prečnik alata</label>
         <input type="number" id="diameter" min="0.1" step="0.1" value="6">
         <div class="hint" id="diameter-unit">mm</div>
       </div>
       <div id="flutes-group">
-        <label>Flutes</label>
+        <label data-i18n="calc.flutes">Broj oštrica</label>
         <input type="number" id="flutes" min="1" step="1" value="2">
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>Pass</label>
+        <label data-i18n="calc.pass">Prolaz</label>
         <select id="pass-type">
-          <option value="roughing">Roughing</option>
-          <option value="finishing">Finishing</option>
+          <option value="roughing" data-i18n="calc.roughing">Gruba obrada</option>
+          <option value="finishing" data-i18n="calc.finishing">Fina obrada</option>
         </select>
       </div>
       <div class="field-group" id="chipload-group">
-        <label id="chipload-label">Chip Load / Tooth</label>
+        <label id="chipload-label" data-i18n="calc.chiploadLabel">Posmak po zubu</label>
         <input type="number" id="chipload" min="0.001" step="0.001" value="0.05">
         <div class="hint" id="chipload-unit">mm/tooth</div>
       </div>
       <div class="field-group" id="feedrev-group">
-        <label>Feed / Revolution</label>
+        <label data-i18n="calc.feedrevLabel">Posmak po obrtaju</label>
         <input type="number" id="feedrev" min="0.01" step="0.01" value="0.15">
         <div class="hint" id="feedrev-unit">mm/rev</div>
       </div>
@@ -86,21 +91,21 @@
 
   <div class="results">
     <div class="result-row">
-      <span class="result-label">Spindle Speed</span>
+      <span class="result-label" data-i18n="calc.spindleSpeed">Broj obrtaja vretena</span>
       <span class="result-value"><span id="out-rpm">0</span><span class="unit">RPM</span></span>
     </div>
     <div class="result-row">
-      <span class="result-label">Feed Rate</span>
+      <span class="result-label" data-i18n="calc.feedRate">Brzina posmaka</span>
       <span class="result-value"><span id="out-feed">0</span><span class="unit" id="out-feed-unit">mm/min</span></span>
     </div>
     <div class="result-row">
-      <span class="result-label">Cutting Speed Used</span>
+      <span class="result-label" data-i18n="calc.cuttingSpeedUsed">Korištena rezna brzina</span>
       <span class="result-value"><span id="out-vc">0</span><span class="unit" id="out-vc-unit">m/min</span></span>
     </div>
   </div>
 
-  <div class="note">
-    These are starting-point values, not a guarantee — always check your tool manufacturer's chart, start conservative on a new setup, and adjust from chip color/sound/finish. Recalculate after material or tool changes; never rely on this alone for an unfamiliar job.
+  <div class="note" data-i18n="calc.note">
+    Ovo su početne vrijednosti, a ne garancija — uvijek provjeri tabelu proizvođača alata, počni oprezno na novom podešavanju i prilagodi prema boji strugotine, zvuku i kvaliteti obrade. Ponovo izračunaj nakon promjene materijala ili alata; nikad se ne oslanjaj samo na ovo za nepoznat posao.
   </div>
 </div>
 </div>
@@ -108,15 +113,15 @@
 <!-- ===================== G-CODE REFERENCE ===================== -->
 <div class="tab-panel" id="gcode">
 <div class="app">
-  <h1>G-code &amp; M-code Reference</h1>
-  <div class="subtitle">Quick lookup for programming — search by code, word, or category</div>
+  <h1 data-i18n="gcode.title">G-kod i M-kod referenca</h1>
+  <div class="subtitle" data-i18n="gcode.subtitle">Brza pretraga za programiranje — pretraži po kodu, riječi ili kategoriji</div>
 
-  <input type="search" id="gcode-search" placeholder="Search e.g. &quot;G02&quot;, &quot;arc&quot;, &quot;spindle&quot;" style="margin-bottom: 1rem;">
+  <input type="search" id="gcode-search" data-i18n-placeholder="gcode.searchPlaceholder" placeholder="Pretraži npr. &quot;G02&quot;, &quot;luk&quot;, &quot;vreteno&quot;" style="margin-bottom: 1rem;">
 
   <div class="gcode-list" id="gcode-list"></div>
 
-  <div class="note">
-    This is a generic/ISO-style reference (Fanuc-compatible in most cases). Exact code numbers can vary by controller (Fanuc, Siemens Sinumerik, Heidenhain) — always verify against your school machine's control manual before running a program, especially unit-selection codes (G20/G21 vs G70/G71).
+  <div class="note" data-i18n="gcode.note">
+    Ovo je generička/ISO referenca (u većini slučajeva kompatibilna sa Fanuc-om). Tačni brojevi kodova mogu se razlikovati zavisno od upravljačke jedinice (Fanuc, Siemens Sinumerik, Heidenhain) — uvijek provjeri sa priručnikom mašine u školi prije pokretanja programa, posebno kodove za izbor jedinica (G20/G21 ili G70/G71).
   </div>
 </div>
 </div>
@@ -124,144 +129,48 @@
 <!-- ===================== CURRICULUM ===================== -->
 <div class="tab-panel" id="curriculum">
 <div class="app">
-  <h1>3rd Year — Tehničar CNC tehnologije</h1>
-  <div class="subtitle">Official Republika Srpska curriculum, subject by subject</div>
+  <h1 data-i18n="curriculum.title">3. razred — Tehničar CNC tehnologije</h1>
+  <div class="subtitle" data-i18n="curriculum.subtitle">Zvanični nastavni plan Republike Srpske, predmet po predmet</div>
 
-  <div class="note" style="margin-top:0; margin-bottom:1rem;">
-    Years 1–2 built the foundations. 3rd year is where CNC programming and machine operation actually start.
+  <div class="note" style="margin-top:0; margin-bottom:1rem;" data-i18n="curriculum.intro">
+    Prva dva razreda su postavila temelje. Treći razred je tamo gdje CNC programiranje i rad na mašinama zaista počinju.
   </div>
 
-  <details class="subject" open>
-    <summary>CNC програмирање (CNC Programming)</summary>
-    <div class="module">
-      <div class="module-title">1. Програмирање НУМА</div>
-      <div class="module-topics">CNC fundamentals: coordinate systems, reference points (machine/workpiece/tool zero), G-codes &amp; M-codes, absolute vs. incremental, reading technical documentation.</div>
-    </div>
-    <div class="module">
-      <div class="module-title">2. Програмирање НУМА глодалица</div>
-      <div class="module-topics">CNC milling: face milling, contour milling with tool radius compensation, slots &amp; pockets, holes, thread milling.</div>
-    </div>
-    <div class="module">
-      <div class="module-title">3. Програмирање НУМА струга</div>
-      <div class="module-topics">CNC turning: contour turning, grooving, drilling on the lathe, thread turning.</div>
-    </div>
-  </details>
-
-  <details class="subject">
-    <summary>Практична настава (Shop / Practical Training)</summary>
-    <div class="module">
-      <div class="module-title">1. Обрада на стругу</div>
-      <div class="module-topics">Manual/conventional lathe work: turning tools, longitudinal turning, tapers, grooving.</div>
-    </div>
-    <div class="module">
-      <div class="module-title">2. Обрада на глодалици и брусилици</div>
-      <div class="module-topics">Conventional milling &amp; grinding: milling tools, flat surface machining, angle milling, dividing head work.</div>
-    </div>
-    <div class="module">
-      <div class="module-title">3. Припрема НУМА за рад</div>
-      <div class="module-topics">Real CNC operation: machine setup, control unit operation, tool/workholding/measuring prep, setting zero points, producing &amp; inspecting parts on CNC mill and lathe.</div>
-    </div>
-  </details>
-
-  <details class="subject">
-    <summary>Технологија обраде (Machining Technology theory)</summary>
-    <div class="module-topics">Cutting theory fundamentals, sawing, turning, drilling, milling, then broaching, grinding/honing, thread &amp; gear cutting, non-conventional machining, technological process design.</div>
-  </details>
-
-  <details class="subject">
-    <summary>Машински елементи (Machine Elements)</summary>
-    <div class="module-topics">Shafts, bearings, couplings, then gears (spur, bevel), worm drives, chain and belt drives.</div>
-  </details>
-
-  <details class="subject">
-    <summary>Моделирање и симулација помоћу рачунара (CAD Modeling)</summary>
-    <div class="module-topics">3D modeling of shafts, bearings, gears, gear trains, chain/belt drives, plus technical documentation.</div>
-  </details>
-
-  <details class="subject">
-    <summary>Рачунари и програмирање (Computers &amp; Programming)</summary>
-    <div class="module-topics">General programming in C/C++ — linear and branching program structures. Not CNC-specific, more a general computing skill.</div>
-  </details>
-
-  <details class="subject">
-    <summary>Хидраулика и пнеуматика (Hydraulics &amp; Pneumatics)</summary>
-    <div class="module-topics">Hydraulic system fundamentals, laws, and schematic symbols.</div>
-  </details>
-
-  <details class="subject">
-    <summary>Термодинамика (Thermodynamics)</summary>
-    <div class="module-topics">Gas laws, heat transfer, thermodynamic cycles, then heating/cooling basics and power plant fundamentals.</div>
-  </details>
-
-  <details class="subject">
-    <summary>Основи предузетништва (Entrepreneurship Basics)</summary>
-    <div class="module-topics">What entrepreneurship is, entrepreneur profile, then business plans, marketing, and finance basics.</div>
-  </details>
-
-  <details class="subject">
-    <summary>General subjects</summary>
-    <div class="module-topics">Math, Serbian language, foreign language (English/German/Italian/Russian), PE, plus one elective from Вјеронаука / Етика / Демократија и људска права / Култура религија.</div>
-  </details>
+  <div id="curriculum-list"></div>
 </div>
 </div>
 
 <!-- ===================== RESOURCES ===================== -->
 <div class="tab-panel" id="resources">
 <div class="app">
-  <h1>Study Resources</h1>
-  <div class="subtitle">Where to look, and how to use the time you have</div>
+  <h1 data-i18n="resources.title">Materijali za učenje</h1>
+  <div class="subtitle" data-i18n="resources.subtitle">Gdje tražiti, i kako iskoristiti vrijeme koje imaš</div>
 
-  <div class="note" style="margin-top:0;">
-    The official curriculum doesn't name a fixed textbook — it just says "approved by the Ministry." Ask your CNC programiranje and Tehnologija obrade teachers for the exact assigned title first; that beats anything found online.
-  </div>
-
-  <h2 style="margin-top:1.2rem;">Textbooks &amp; notes</h2>
-
-  <div class="resource-item">
-    <a href="https://pdfcoffee.com/mainski-elementi-miroslav-ognjanovipdf-pdf-free.html" target="_blank" rel="noopener">Mašinski elementi — Miroslav Ognjanović</a>
-    <div class="desc">Standard regional textbook on shafts, bearings, couplings, gears — matches the Mašinski elementi topic list closely.</div>
-  </div>
-  <div class="resource-item">
-    <a href="https://pdfcoffee.com/tehnologija-obrade-za-ii-mastr-pdf-free.html" target="_blank" rel="noopener">Tehnologija obrade za II mašinsku struku</a>
-    <div class="desc">Aligns with the Tehnologija obrade module.</div>
-  </div>
-  <div class="resource-item">
-    <a href="https://pdfcoffee.com/mainski-elementi-i-skripta-za-usmeni-pdf-free.html" target="_blank" rel="noopener">Mašinski elementi I — skripta za usmeni</a>
-    <div class="desc">Exam-prep style notes, good for oral exam review.</div>
-  </div>
-  <div class="resource-item">
-    <a href="https://www.unibl.org/en/members/faculties/faculty-of-mechanical-engineering" target="_blank" rel="noopener">Univerzitet u Banjoj Luci — Mašinski fakultet</a>
-    <div class="desc">Publishes free lecture notes (skripte) for Mehanika and related subjects — same terminology, verifiable university source.</div>
+  <div class="note" style="margin-top:0;" data-i18n="resources.note">
+    Zvanični nastavni plan ne navodi fiksni udžbenik — samo kaže da je „odobren od Ministarstva”. Prvo pitaj svoje nastavnike CNC programiranja i Tehnologije obrade za tačan naslov; to je pouzdanije od bilo čega pronađenog na internetu.
   </div>
 
-  <h2 style="margin-top:1.2rem;">CNC programming / G-code</h2>
+  <h2 style="margin-top:1.2rem;" data-i18n="resources.textbooksHeading">Udžbenici i skripte</h2>
+  <div id="resources-textbooks"></div>
 
-  <div class="resource-item">
-    <a href="https://www.cnccookbook.com/cnc-programming-g-code/" target="_blank" rel="noopener">CNCCookbook — G-code tutorial</a>
-    <div class="desc">Clear intro, explains mill vs. lathe programming differences.</div>
-  </div>
-  <div class="resource-item">
-    <a href="https://www.helmancnc.com/cnc/beginner-lessons/" target="_blank" rel="noopener">HelmanCNC — Beginner lessons</a>
-    <div class="desc">Simple worked examples for mill and lathe, covers Fanuc/Siemens/Haas.</div>
-  </div>
+  <h2 style="margin-top:1.2rem;" data-i18n="resources.cncHeading">CNC programiranje / G-kod</h2>
+  <div id="resources-cnc"></div>
 
-  <h2 style="margin-top:1.2rem;">How to study this year</h2>
-  <ul class="tip-list">
-    <li><strong>CNC programiranje / Praktična nastava:</strong> drill the G/M-code table until it's automatic, then hand-trace programs on paper before running them — shop time is limited and mistakes cost material.</li>
-    <li><strong>Mašinski elementi / Tehnologija obrade:</strong> this builds directly on 1st–2nd year mechanics and materials — patch any shaky spots from those years now.</li>
-    <li><strong>Cross-link tools to homework:</strong> use the Feeds &amp; Speeds calculator on Tehnologija obrade problem sets, not just in the shop, so the numbers stay intuitive by exam time.</li>
-  </ul>
+  <h2 style="margin-top:1.2rem;" data-i18n="resources.studyHeading">Kako učiti ove godine</h2>
+  <ul class="tip-list" id="resources-tips"></ul>
 </div>
 </div>
 
 <!-- ===================== BOTTOM NAV ===================== -->
 <nav class="tabbar">
-  <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span>Calculator</button>
-  <button data-tab="gcode" type="button"><span class="icon">🔤</span>G-code</button>
-  <button data-tab="curriculum" type="button"><span class="icon">📘</span>3rd Year</button>
-  <button data-tab="resources" type="button"><span class="icon">📚</span>Resources</button>
+  <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span><span data-i18n="nav.calc">Kalkulator</span></button>
+  <button data-tab="gcode" type="button"><span class="icon">🔤</span><span data-i18n="nav.gcode">G-kod</span></button>
+  <button data-tab="curriculum" type="button"><span class="icon">📘</span><span data-i18n="nav.curriculum">3. razred</span></button>
+  <button data-tab="resources" type="button"><span class="icon">📚</span><span data-i18n="nav.resources">Resursi</span></button>
 </nav>
 
+<script src="i18n.js"></script>
+<script src="content-data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
