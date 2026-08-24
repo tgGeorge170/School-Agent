@@ -1,5 +1,50 @@
 // Bilingual content data: materials, G-codes/M-codes, curriculum, resources.
 
+// Weekly schedule for 3 CNC, group G2 (Praktična nastava / Računari i
+// programiranje), from the school's official raspored (FET export, valid
+// from 1.9.2026). Split-group periods show only the G2 side.
+const SCHEDULE = [
+  { day: "Ponedjeljak", classes: [
+    "Njemački jezik — Ž. Milojković",
+    "Fizičko vaspitanje — D. Šarčević",
+    "Tehnologija obrade — V. Turjačanin",
+    "Računari i programiranje (G2) — S. Đukanović",
+    "Računari i programiranje (G2) — S. Đukanović",
+  ]},
+  { day: "Utorak", classes: [
+    "Srpski jezik — M. Čekić",
+    "Mašinski elementi — S. Vidović",
+    "Mašinski elementi — S. Vidović",
+    "Fizičko vaspitanje — D. Šarčević",
+    "Vjeronauka — S. Rakić",
+    "Demokratija i ljudska prava — S. Ivanović",
+  ]},
+  { day: "Srijeda", classes: [
+    "Modeliranje i simulacija — S. Đukanović, A. Rapaić",
+    "Modeliranje i simulacija — S. Đukanović, A. Rapaić",
+    "Modeliranje i simulacija — S. Đukanović, A. Rapaić",
+    "Matematika — N. Runjić",
+    "Matematika — N. Runjić",
+    "Termodinamika — M. Knežević",
+  ]},
+  { day: "Četvrtak", classes: [
+    "Matematika — N. Runjić",
+    "Hidraulika i pneumatika — A. Rapaić",
+    "Hidraulika i pneumatika — A. Rapaić",
+    "Praktična nastava (G2) — M. Vučković",
+    "Praktična nastava (G2) — M. Vučković",
+    "Praktična nastava (G2) — M. Vučković",
+  ]},
+  { day: "Petak", classes: [
+    "CNC programiranje — M. Knežević, S. Đukanović",
+    "CNC programiranje — M. Knežević, S. Đukanović",
+    "CNC programiranje — M. Knežević, S. Đukanović",
+    "Njemački jezik — Ž. Milojković",
+    "Tehnologija obrade — V. Turjačanin",
+    "Srpski jezik — M. Čekić",
+  ]},
+];
+
 const MATERIALS = {
   aluminum:  { label: { sr: "Aluminijum (6061)", en: "Aluminum (6061)" }, vc: 300, feedFactor: 1.3 },
   brass:     { label: { sr: "Mesing", en: "Brass" }, vc: 150, feedFactor: 1.1 },

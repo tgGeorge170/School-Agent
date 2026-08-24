@@ -12,6 +12,27 @@
   });
 })();
 
+// ---------- Schedule ----------
+(function () {
+  const listEl = document.getElementById("schedule-list");
+  if (!listEl) return;
+  const todayName = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"][new Date().getDay()];
+
+  listEl.innerHTML = "";
+  SCHEDULE.forEach((day) => {
+    const h = document.createElement("div");
+    h.className = "section-heading";
+    h.textContent = day.day + (day.day === todayName ? " — danas" : "");
+    listEl.appendChild(h);
+    day.classes.forEach((cls, i) => {
+      const div = document.createElement("div");
+      div.className = "journal-item";
+      div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${i + 1}.</span><span class="journal-subject">${cls}</span></div>`;
+      listEl.appendChild(div);
+    });
+  });
+})();
+
 // ---------- Feeds & Speeds calculator ----------
 (function () {
   const HSS_FACTOR = 0.4;

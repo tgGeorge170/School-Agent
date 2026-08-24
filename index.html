@@ -12,6 +12,15 @@
 </head>
 <body>
 
+<!-- ===================== SCHEDULE ===================== -->
+<div class="tab-panel" id="schedule">
+<div class="app">
+  <h1>Raspored — 3 CNC (G2)</h1>
+  <div class="subtitle">Sedmični raspored časova, važi od 1.9.2026.</div>
+  <div id="schedule-list"></div>
+</div>
+</div>
+
 <!-- ===================== CALCULATOR ===================== -->
 <div class="tab-panel active" id="calc">
 <div class="app">
@@ -236,6 +245,7 @@
 
 <!-- ===================== BOTTOM NAV ===================== -->
 <nav class="tabbar">
+  <button data-tab="schedule" type="button"><span class="icon">🗓️</span><span>Raspored</span></button>
   <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span><span data-i18n="nav.calc">Kalkulator</span></button>
   <button data-tab="gcode" type="button"><span class="icon">🔤</span><span data-i18n="nav.gcode">G-kod</span></button>
   <button data-tab="curriculum" type="button"><span class="icon">📘</span><span data-i18n="nav.curriculum">3. razred</span></button>
