@@ -21,6 +21,8 @@ const JOURNAL_SUBJECTS = [
   const NOTES_KEY = "cncJournalNotes";
   const TESTS_KEY = "cncJournalTests";
   const GRADES_KEY = "cncJournalGrades";
+  const TASKS_KEY = "cncJournalTasks";
+  const ALL_KEYS = [NOTES_KEY, TESTS_KEY, GRADES_KEY, TASKS_KEY];
 
   const datalist = document.getElementById("subjects-list");
   if (!datalist) return; // journal markup not present
@@ -169,8 +171,8 @@ const JOURNAL_SUBJECTS = [
       .replace(/\s+/g, "-")
       .replace(/[^a-zA-Z0-9-]/g, "");
   }
-  function downloadIcs(filename, content) {
-    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -179,6 +181,9 @@ const JOURNAL_SUBJECTS = [
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  function downloadIcs(filename, content) {
+    downloadFile(filename, content, "text/calendar;charset=utf-8");
   }
 
   // ---------- Tests ----------
@@ -258,6 +263,136 @@ const JOURNAL_SUBJECTS = [
     renderTests();
   });
 
+  // ---------- Tasks (Zadaci) ----------
+  const taskForm = document.getElementById("task-form");
+  const taskSubject = document.getElementById("task-subject");
+  const taskDate = document.getElementById("task-date");
+  const taskNote = document.getElementById("task-note");
+  const tasksList = document.getElementById("tasks-list");
+  const exportTasksBtn = document.getElementById("export-tasks-btn");
+
+  function renderTasks() {
+    const tasks = load(TASKS_KEY).sort((a, b) => {
+      if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+      return a.date > b.date ? 1 : -1;
+    });
+    tasksList.innerHTML = "";
+    if (tasks.length === 0) {
+      tasksList.innerHTML = '<div class="hint">Još nema zadataka.</div>';
+      return;
+    }
+    tasks.forEach((task) => {
+      const days = daysUntil(task.date);
+      const div = document.createElement("div");
+      div.className = "journal-item" + (task.done ? " past" : "");
+      const badgeClass = task.done ? "badge-past" : days < 0 ? "badge-soon" : days <= 1 ? "badge-soon" : "badge-normal";
+      const badgeText = task.done ? "urađeno" : countdownLabel(days);
+      div.innerHTML = `
+        <div class="journal-item-head">
+          <button class="journal-check" type="button" aria-label="Označi urađeno">${task.done ? "☑" : "☐"}</button>
+          <span class="journal-subject">${task.subject || "Zadatak"}</span>
+          <span class="journal-badge ${badgeClass}">${badgeText}</span>
+          <button class="journal-cal" type="button" aria-label="Dodaj u kalendar">📅</button>
+          <button class="journal-del" type="button" aria-label="Obriši">✕</button>
+        </div>
+        <div class="journal-text">${fmtDate(task.date)}${task.note ? " — " + task.note : ""}</div>
+      `;
+      div.querySelector(".journal-check").addEventListener("click", () => {
+        const all = load(TASKS_KEY);
+        const t = all.find((x) => x.id === task.id);
+        if (t) t.done = !t.done;
+        save(TASKS_KEY, all);
+        renderTasks();
+      });
+      div.querySelector(".journal-cal").addEventListener("click", () => {
+        downloadIcs(`zadatak-${slugForFilename(task.subject)}.ics`, buildIcs([task]));
+      });
+      div.querySelector(".journal-del").addEventListener("click", () => {
+        save(TASKS_KEY, load(TASKS_KEY).filter((x) => x.id !== task.id));
+        renderTasks();
+      });
+      tasksList.appendChild(div);
+    });
+  }
+
+  if (exportTasksBtn) {
+    exportTasksBtn.addEventListener("click", () => {
+      const upcoming = load(TASKS_KEY).filter((task) => !task.done);
+      if (upcoming.length === 0) return;
+      downloadIcs("zadaci.ics", buildIcs(upcoming));
+    });
+  }
+
+  if (taskForm) {
+    taskForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!taskDate.value) return;
+      const tasks = load(TASKS_KEY);
+      tasks.push({
+        id: uid(),
+        subject: taskSubject.value.trim(),
+        date: taskDate.value,
+        note: taskNote.value.trim(),
+        done: false,
+      });
+      save(TASKS_KEY, tasks);
+      taskSubject.value = "";
+      taskDate.value = "";
+      taskNote.value = "";
+      renderTasks();
+    });
+  }
+
+  // ---------- Backup / restore ----------
+  const exportBackupBtn = document.getElementById("export-backup-btn");
+  const importBackupBtn = document.getElementById("import-backup-btn");
+  const importBackupInput = document.getElementById("import-backup-input");
+
+  if (importBackupBtn && importBackupInput) {
+    importBackupBtn.addEventListener("click", () => importBackupInput.click());
+  }
+
+  if (exportBackupBtn) {
+    exportBackupBtn.addEventListener("click", () => {
+      const data = {};
+      ALL_KEYS.forEach((k) => { data[k] = load(k); });
+      const stamp = todayIso();
+      downloadFile(`dnevnik-backup-${stamp}.json`, JSON.stringify(data, null, 2), "application/json");
+    });
+  }
+  if (importBackupInput) {
+    importBackupInput.addEventListener("change", () => {
+      const file = importBackupInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const hasKnownKey = ALL_KEYS.some((k) => Array.isArray(data[k]));
+          if (!hasKnownKey) {
+            alert("Ovaj fajl ne izgleda kao backup Dnevnika.");
+            return;
+          }
+          if (!confirm("Ovo će zamijeniti sve trenutne bilješke, testove, ocjene i zadatke na ovom telefonu. Nastaviti?")) {
+            return;
+          }
+          ALL_KEYS.forEach((k) => {
+            if (Array.isArray(data[k])) save(k, data[k]);
+          });
+          renderNotes();
+          renderTests();
+          renderTasks();
+          renderGrades();
+          alert("Podaci su vraćeni.");
+        } catch (e) {
+          alert("Fajl nije validan JSON backup.");
+        }
+        importBackupInput.value = "";
+      };
+      reader.readAsText(file);
+    });
+  }
+
   // ---------- Grades ----------
   const gradeForm = document.getElementById("grade-form");
   const gradeSubject = document.getElementById("grade-subject");
@@ -336,5 +471,6 @@ const JOURNAL_SUBJECTS = [
   noteDate.value = todayIso();
   renderNotes();
   renderTests();
+  renderTasks();
   renderGrades();
 })();

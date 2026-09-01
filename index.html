@@ -169,11 +169,21 @@
 <div class="tab-panel" id="journal">
 <div class="app">
   <h1>Dnevnik</h1>
-  <div class="subtitle">Bilješke, testovi i ocjene — sve ostaje samo na ovom telefonu</div>
+  <div class="subtitle">Bilješke, testovi, zadaci i ocjene — sve ostaje samo na ovom telefonu</div>
+
+  <div class="row" style="margin-bottom: 1rem;">
+    <button type="button" id="export-backup-btn" class="add-btn secondary" style="margin:0;">⬇️ Sačuvaj backup</button>
+    <button type="button" id="import-backup-btn" class="add-btn secondary" style="margin:0;">⬆️ Vrati backup</button>
+    <input type="file" id="import-backup-input" accept="application/json" style="display:none;">
+  </div>
+  <div class="hint" style="margin: -0.6rem 0 1rem;">
+    Backup je jedini način da sačuvaš ove podatke ako promijeniš telefon ili obrišeš podatke sajta — sve živi samo ovdje, ni na jednom serveru.
+  </div>
 
   <div class="subtab-bar">
     <button class="subtab active" data-sub="notes" type="button">Bilješke</button>
     <button class="subtab" data-sub="tests" type="button">Testovi</button>
+    <button class="subtab" data-sub="tasks" type="button">Zadaci</button>
     <button class="subtab" data-sub="grades" type="button">Ocjene</button>
   </div>
 
@@ -219,6 +229,31 @@
     </div>
 
     <div id="tests-list"></div>
+  </div>
+
+  <div class="subtab-panel" id="sub-tasks">
+    <form class="panel" id="task-form">
+      <div class="row">
+        <div>
+          <label>Predmet</label>
+          <input type="text" id="task-subject" list="subjects-list" placeholder="npr. Tehničko crtanje">
+        </div>
+        <div>
+          <label>Rok</label>
+          <input type="date" id="task-date">
+        </div>
+      </div>
+      <label>Šta treba uraditi (opciono)</label>
+      <input type="text" id="task-note" placeholder="npr. Crtež zupčanika">
+      <button type="submit" class="add-btn">Dodaj zadatak</button>
+    </form>
+
+    <button type="button" id="export-tasks-btn" class="add-btn secondary">📅 Izvezi sve u kalendar</button>
+    <div class="hint" style="margin: 0.4rem 0 1rem;">
+      Isto kao kod testova — svaki nezavršen zadatak dobija podsjetnik dva dana prije i sat vremena prije roka.
+    </div>
+
+    <div id="tasks-list"></div>
   </div>
 
   <div class="subtab-panel" id="sub-grades">
