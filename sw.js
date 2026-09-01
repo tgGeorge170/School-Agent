@@ -1,4 +1,4 @@
-const CACHE_NAME = "cnc-companion-v4";
+const CACHE_NAME = "cnc-companion-v5";
 const ASSETS = [
   "./index.html",
   "./styles.css",
@@ -13,7 +13,9 @@ const ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(ASSETS.map((url) => new Request(url, { cache: "no-store" }))))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -27,10 +29,13 @@ self.addEventListener("activate", (event) => {
 
 // Network-first: always prefer the latest deployed files while online (this
 // app is under active development), falling back to cache only when offline.
+// `cache: "no-store"` is essential here — GitHub Pages sends Cache-Control
+// headers, so a plain fetch() can be silently answered from the browser's
+// own HTTP cache instead of actually hitting the network.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
