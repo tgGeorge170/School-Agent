@@ -1,5 +1,16 @@
 // Bilingual content data: materials, G-codes/M-codes, curriculum, resources.
 
+// Bell schedule (afternoon shift) — period number -> clock times.
+const PERIOD_TIMES = [
+  "13:10–13:55",
+  "14:00–14:45",
+  "14:50–15:35",
+  "15:55–16:40",
+  "16:45–17:30",
+  "17:35–18:20",
+  "18:25–19:10",
+];
+
 // Weekly schedule for 3 CNC, group G2 (Praktična nastava / Računari i
 // programiranje), from the school's official raspored (FET export, valid
 // from 1.9.2026). Split-group periods show only the G2 side.

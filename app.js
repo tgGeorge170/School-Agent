@@ -27,7 +27,7 @@
     day.classes.forEach((cls, i) => {
       const div = document.createElement("div");
       div.className = "journal-item";
-      div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${i + 1}.</span><span class="journal-subject">${cls}</span></div>`;
+      div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${PERIOD_TIMES[i] || i + 1 + "."}</span><span class="journal-subject">${cls}</span></div>`;
       listEl.appendChild(div);
     });
   });
