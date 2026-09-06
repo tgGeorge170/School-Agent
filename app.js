@@ -24,18 +24,60 @@
 (function () {
   const listEl = document.getElementById("schedule-list");
   if (!listEl) return;
-  const dayNames = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"];
-  const todayName = dayNames[new Date().getDay()];
+  const now = new Date();
+  const todayName = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"][now.getDay()];
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  // "13:10–13:55" -> [790, 835] (minutes since midnight, start & end)
+  function parsePeriod(str) {
+    const m = String(str).match(/(\d{1,2}):(\d{2})\D+(\d{1,2}):(\d{2})/);
+    return m ? [+m[1] * 60 + +m[2], +m[3] * 60 + +m[4]] : null;
+  }
+
+  // Which of today's classes is happening now, and which is next.
+  const today = SCHEDULE.find((d) => d.day === todayName);
+  let nowIdx = -1;
+  let nextIdx = -1;
+  if (today) {
+    today.classes.forEach((cls, i) => {
+      const p = parsePeriod(PERIOD_TIMES[i]);
+      if (!p) return;
+      if (nowMin >= p[0] && nowMin < p[1]) nowIdx = i;
+      if (nowMin < p[0] && nextIdx === -1) nextIdx = i;
+    });
+  }
 
   listEl.innerHTML = "";
+
+  // Status banner at the top.
+  const banner = document.createElement("div");
+  banner.className = "schedule-now";
+  if (!today) {
+    banner.textContent = "Danas nema nastave — uživaj u vikendu.";
+  } else if (nowIdx >= 0) {
+    const p = parsePeriod(PERIOD_TIMES[nowIdx]);
+    const endStr = String(Math.floor(p[1] / 60)).padStart(2, "0") + ":" + String(p[1] % 60).padStart(2, "0");
+    banner.innerHTML = `<span class="schedule-now-label">Sada</span>${today.classes[nowIdx]} <span class="schedule-now-time">do ${endStr}</span>`;
+  } else if (nextIdx >= 0) {
+    const p = parsePeriod(PERIOD_TIMES[nextIdx]);
+    const startStr = String(Math.floor(p[0] / 60)).padStart(2, "0") + ":" + String(p[0] % 60).padStart(2, "0");
+    banner.innerHTML = `<span class="schedule-now-label">Sljedeće</span>${today.classes[nextIdx]} <span class="schedule-now-time">u ${startStr}</span>`;
+  } else {
+    banner.textContent = "Nastava za danas je gotova.";
+  }
+  listEl.appendChild(banner);
+
   SCHEDULE.forEach((day) => {
+    const isToday = day.day === todayName;
     const h = document.createElement("div");
     h.className = "section-heading";
-    h.textContent = day.day + (day.day === todayName ? " — danas" : "");
+    h.textContent = day.day + (isToday ? " — danas" : "");
     listEl.appendChild(h);
     day.classes.forEach((cls, i) => {
       const div = document.createElement("div");
       div.className = "journal-item";
+      if (isToday && i === nowIdx) div.classList.add("now");
+      else if (isToday && i === nextIdx) div.classList.add("next");
       div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${PERIOD_TIMES[i] || i + 1 + "."}</span><span class="journal-subject">${cls}</span></div>`;
       listEl.appendChild(div);
     });

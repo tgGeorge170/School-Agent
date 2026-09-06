@@ -47,14 +47,22 @@ const JOURNAL_SUBJECTS = [
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
+  // Escape user-entered text before it goes into innerHTML.
+  function esc(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
   function fmtDate(iso) {
     if (!iso) return "";
     const [y, m, d] = iso.split("-");
     return `${d}.${m}.${y}.`;
   }
+  // Local calendar date (YYYY-MM-DD) — not UTC, so it stays correct past
+  // midnight in Belgrade's timezone. `pad` is hoisted from below.
   function todayIso() {
     const d = new Date();
-    return d.toISOString().slice(0, 10);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
   // ---------- Sub-tab switching ----------
@@ -87,10 +95,10 @@ const JOURNAL_SUBJECTS = [
       div.innerHTML = `
         <div class="journal-item-head">
           <span class="journal-date">${fmtDate(n.date)}</span>
-          ${n.subject ? `<span class="journal-subject">${n.subject}</span>` : ""}
+          ${n.subject ? `<span class="journal-subject">${esc(n.subject)}</span>` : ""}
           <button class="journal-del" type="button" aria-label="Obriši">✕</button>
         </div>
-        <div class="journal-text">${n.text}</div>
+        <div class="journal-text">${esc(n.text)}</div>
       `;
       div.querySelector(".journal-del").addEventListener("click", () => {
         save(NOTES_KEY, load(NOTES_KEY).filter((x) => x.id !== n.id));
@@ -221,12 +229,12 @@ const JOURNAL_SUBJECTS = [
       const badgeClass = days < 0 ? "badge-past" : days <= 3 ? "badge-soon" : "badge-normal";
       div.innerHTML = `
         <div class="journal-item-head">
-          <span class="journal-subject">${tst.subject || "Test"}</span>
+          <span class="journal-subject">${esc(tst.subject || "Test")}</span>
           <span class="journal-badge ${badgeClass}">${countdownLabel(days)}</span>
           <button class="journal-cal" type="button" aria-label="Dodaj u kalendar">📅</button>
           <button class="journal-del" type="button" aria-label="Obriši">✕</button>
         </div>
-        <div class="journal-text">${fmtDate(tst.date)}${tst.note ? " — " + tst.note : ""}</div>
+        <div class="journal-text">${fmtDate(tst.date)}${tst.note ? " — " + esc(tst.note) : ""}</div>
       `;
       div.querySelector(".journal-cal").addEventListener("click", () => {
         downloadIcs(`test-${slugForFilename(tst.subject)}.ics`, buildIcs([tst]));
@@ -291,12 +299,12 @@ const JOURNAL_SUBJECTS = [
       div.innerHTML = `
         <div class="journal-item-head">
           <button class="journal-check" type="button" aria-label="Označi urađeno">${task.done ? "☑" : "☐"}</button>
-          <span class="journal-subject">${task.subject || "Zadatak"}</span>
+          <span class="journal-subject">${esc(task.subject || "Zadatak")}</span>
           <span class="journal-badge ${badgeClass}">${badgeText}</span>
           <button class="journal-cal" type="button" aria-label="Dodaj u kalendar">📅</button>
           <button class="journal-del" type="button" aria-label="Obriši">✕</button>
         </div>
-        <div class="journal-text">${fmtDate(task.date)}${task.note ? " — " + task.note : ""}</div>
+        <div class="journal-text">${fmtDate(task.date)}${task.note ? " — " + esc(task.note) : ""}</div>
       `;
       div.querySelector(".journal-check").addEventListener("click", () => {
         const all = load(TASKS_KEY);
@@ -426,7 +434,7 @@ const JOURNAL_SUBJECTS = [
         const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
         const row = document.createElement("div");
         row.className = "result-row";
-        row.innerHTML = `<span class="result-label">${subj}</span><span class="result-value" style="font-size:1rem;">${avg.toFixed(2)}<span class="unit">(${vals.length})</span></span>`;
+        row.innerHTML = `<span class="result-label">${esc(subj)}</span><span class="result-value" style="font-size:1rem;">${avg.toFixed(2)}<span class="unit">(${vals.length})</span></span>`;
         gradesSummary.appendChild(row);
       });
     }
@@ -444,7 +452,7 @@ const JOURNAL_SUBJECTS = [
         div.className = "journal-item";
         div.innerHTML = `
           <div class="journal-item-head">
-            <span class="journal-subject">${g.subject || "Ostalo"}</span>
+            <span class="journal-subject">${esc(g.subject || "Ostalo")}</span>
             <span class="journal-badge badge-normal">${g.value}</span>
             <button class="journal-del" type="button" aria-label="Obriši">✕</button>
           </div>
