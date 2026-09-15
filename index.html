@@ -165,6 +165,67 @@
 </div>
 </div>
 
+<!-- ===================== LECTURES ===================== -->
+<div class="tab-panel" id="lectures">
+<div class="app">
+  <h1>Predavanja</h1>
+  <div class="subtitle">Gradivo objašnjeno na srpskom — aplikacija ti ga čita naglas</div>
+
+  <details class="subject" id="voice-settings" open>
+    <summary>🔊 Podešavanje glasa</summary>
+    <div class="module voice-panel">
+      <div id="voice-status" class="voice-status">Tražim glasove na uređaju…</div>
+
+      <label for="voice-select">Glas</label>
+      <select id="voice-select"></select>
+
+      <div class="row" style="margin-top:0.7rem;">
+        <div>
+          <label for="voice-rate">Brzina <span id="rate-out" class="range-out">0.95×</span></label>
+          <input type="range" id="voice-rate" min="0.6" max="1.4" step="0.05">
+        </div>
+        <div>
+          <label for="voice-pitch">Visina <span id="pitch-out" class="range-out">1.00</span></label>
+          <input type="range" id="voice-pitch" min="0.7" max="1.3" step="0.05">
+        </div>
+      </div>
+
+      <label class="check-row" id="voice-adapt-row">
+        <input type="checkbox" id="voice-adapt">
+        <span>Prilagodi izgovor stranom glasu — piše riječi onako kako ih strani glas čita, da zvuče bliže srpskom.</span>
+      </label>
+
+      <label for="voice-test-text" style="margin-top:0.7rem;">Probni tekst</label>
+      <textarea id="voice-test-text" rows="2">Glodanje aluminijuma alatom prečnika 10 mm, brzina rezanja 300 m/min, posmak 0.05 mm po zubu. Blok G01 X50. Y20. F120 znači pravolinijsko kretanje do te tačke.</textarea>
+      <button type="button" id="voice-test-btn" class="add-btn">▶️ Probaj glas</button>
+
+      <details class="help-box">
+        <summary>Nemam srpski glas — šta da radim?</summary>
+        <div class="help-body">
+          <p><strong>Laptop (Windows ili Mac):</strong> otvori aplikaciju u <strong>Microsoft Edge</strong> pregledaču. Edge ima besplatne „Online (Natural)” glasove i među njima je srpski — ništa ne moraš instalirati ni plaćati, samo mora postojati internet.</p>
+          <p><strong>Android telefon:</strong> Podešavanja → Pristupačnost → Izlaz teksta u govor (Text-to-speech) → <em>Google Speech Services</em> → Jezik → Srpski, pa dodirni preuzimanje. Poslije toga srpski glas radi i bez interneta.</p>
+          <p><strong>iPhone:</strong> Podešavanja → Pristupačnost → Izgovoreni sadržaj → Glasovi. Ako srpskog nema, uzmi hrvatski ili bosanski — izgovor je praktično isti.</p>
+          <p><strong>Windows bez Edge-a:</strong> Podešavanja → Vrijeme i jezik → Jezik i region → dodaj srpski i u opcijama jezika instaliraj govor (Speech).</p>
+          <p>Ako ni to nije moguće, ostavi strani glas i uključi kvačicu „Prilagodi izgovor” iznad — tekst će biti prepisan tako da strani glas ispadne što bliži srpskom.</p>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <div id="lecture-browse"></div>
+  <div id="lecture-reader" hidden></div>
+
+  <details class="subject" id="free-read" style="margin-top:1rem;">
+    <summary>📄 Pročitaj mi bilo koji tekst</summary>
+    <div class="module voice-panel">
+      <label for="free-text">Nalijepi tekst iz sveske, udžbenika ili sa interneta</label>
+      <textarea id="free-text" rows="5" placeholder="Nalijepi tekst ovdje…"></textarea>
+      <button type="button" id="free-read-btn" class="add-btn">🔊 Čitaj naglas</button>
+    </div>
+  </details>
+</div>
+</div>
+
 <!-- ===================== JOURNAL ===================== -->
 <div class="tab-panel" id="journal">
 <div class="app">
@@ -278,11 +339,24 @@
 </div>
 </div>
 
+<!-- ===================== PLAYER ===================== -->
+<div class="player" id="player" hidden>
+  <div class="player-now" id="player-now"></div>
+  <div class="player-controls">
+    <button type="button" id="p-prev" title="Prethodna rečenica">⏮</button>
+    <button type="button" id="p-play" title="Pauza / nastavi">⏸</button>
+    <button type="button" id="p-next" title="Sljedeća rečenica">⏭</button>
+    <button type="button" id="p-stop" title="Zaustavi">⏹</button>
+    <span class="player-progress" id="p-progress"></span>
+  </div>
+</div>
+
 <!-- ===================== BOTTOM NAV ===================== -->
 <nav class="tabbar">
   <button data-tab="schedule" type="button"><span class="icon">🗓️</span><span>Raspored</span></button>
   <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span><span data-i18n="nav.calc">Kalkulator</span></button>
   <button data-tab="gcode" type="button"><span class="icon">🔤</span><span data-i18n="nav.gcode">G-kod</span></button>
+  <button data-tab="lectures" type="button"><span class="icon">🔊</span><span>Predavanja</span></button>
   <button data-tab="curriculum" type="button"><span class="icon">📘</span><span data-i18n="nav.curriculum">3. razred</span></button>
   <button data-tab="resources" type="button"><span class="icon">📚</span><span data-i18n="nav.resources">Resursi</span></button>
   <button data-tab="journal" type="button"><span class="icon">📓</span><span>Dnevnik</span></button>
@@ -291,6 +365,9 @@
 <script src="i18n.js"></script>
 <script src="content-data.js"></script>
 <script src="journal.js"></script>
+<script src="voice.js"></script>
+<script src="lectures-data.js"></script>
+<script src="lectures.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
