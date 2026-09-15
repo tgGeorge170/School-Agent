@@ -200,13 +200,23 @@
       <button type="button" id="voice-test-btn" class="add-btn">▶️ Probaj glas</button>
 
       <details class="help-box">
-        <summary>Nemam srpski glas — šta da radim?</summary>
+        <summary>Nemam dobar glas — šta da radim?</summary>
         <div class="help-body">
-          <p><strong>Laptop (Windows ili Mac):</strong> otvori aplikaciju u <strong>Microsoft Edge</strong> pregledaču. Edge ima besplatne „Online (Natural)” glasove i među njima je srpski — ništa ne moraš instalirati ni plaćati, samo mora postojati internet.</p>
-          <p><strong>Android telefon:</strong> Podešavanja → Pristupačnost → Izlaz teksta u govor (Text-to-speech) → <em>Google Speech Services</em> → Jezik → Srpski, pa dodirni preuzimanje. Poslije toga srpski glas radi i bez interneta.</p>
-          <p><strong>iPhone:</strong> Podešavanja → Pristupačnost → Izgovoreni sadržaj → Glasovi. Ako srpskog nema, uzmi hrvatski ili bosanski — izgovor je praktično isti.</p>
-          <p><strong>Windows bez Edge-a:</strong> Podešavanja → Vrijeme i jezik → Jezik i region → dodaj srpski i u opcijama jezika instaliraj govor (Speech).</p>
-          <p>Ako ni to nije moguće, ostavi strani glas i uključi kvačicu „Prilagodi izgovor” iznad — tekst će biti prepisan tako da strani glas ispadne što bliži srpskom.</p>
+          <p><strong>Ne mora biti baš srpski glas.</strong> Hrvatski i bosanski čitaju našu latinicu potpuno isto — ista slova, isti izgovor, a hrvatski je uz to ijekavski kao i mi. Aplikacija ih sama bira odmah poslije srpskog. Zato je najlakše instalirati hrvatski glas, koji <em>postoji</em> i na Windows-u i na Mac-u.</p>
+
+          <p><strong>Windows (bilo koji pregledač):</strong> Podešavanja → Vrijeme i jezik → Jezik i region → Dodaj jezik → <em>Hrvatski</em> → čekiraj „Govor / Text-to-speech” i instaliraj. Zatvori i ponovo otvori pregledač — pojaviće se glas <em>Microsoft Matej</em>. Windows nema nijedan srpski glas, pa je ovo najbolje što se dobija bez interneta.</p>
+
+          <p><strong>Mac (bilo koji pregledač):</strong> Podešavanja sistema → Pristupačnost → Izgovoreni sadržaj → Sistemski glas → <em>Upravljaj glasovima</em> → Hrvatski → <em>Lana</em> → preuzmi.</p>
+
+          <p><strong>Android:</strong> Podešavanja → Pristupačnost → Text-to-speech → <em>Google Speech Services</em> → Jezik → Srpski → preuzmi. Android jedini ima pravi srpski glas i radi bez interneta.</p>
+
+          <p><strong>iPhone:</strong> Podešavanja → Pristupačnost → Izgovoreni sadržaj → Glasovi → Hrvatski.</p>
+
+          <p><strong>Linux:</strong> <code>sudo apt install espeak-ng speech-dispatcher</code> — dobiješ srpski glas odmah, ali robotski.</p>
+
+          <p><strong>Ako hoćeš najprirodniji glas:</strong> Microsoft Edge ima besplatne „Online (Natural)” glasove i među njima pravi srpski, bez ikakve instalacije. To je jedino mjesto gdje taj glas postoji na laptopu — ne moraš ga koristiti, ali zvuči najbolje.</p>
+
+          <p>Ako ništa od ovoga ne možeš, ostavi strani glas i uključi kvačicu „Prilagodi izgovor” iznad — tekst se prepiše tako da strani glas ispadne što bliži našem.</p>
         </div>
       </details>
     </div>

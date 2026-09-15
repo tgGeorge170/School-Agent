@@ -79,15 +79,23 @@
       els.status.textContent = "Nijedan glas nije pronađen na ovom uređaju. Vidi uputstvo ispod.";
       return;
     }
-    if (Voice.isGoodVoice()) {
+    const q = Voice.quality();
+    if (q === "exact") {
       els.status.className = "voice-status good";
-      els.status.textContent = "Glas: " + v.name + " (" + langLabel(v) + "). Ovo je naš jezik — izgovor će biti tačan.";
+      const same = String(v.lang || "").toLowerCase().indexOf("sr") === 0
+        ? "Srpski glas — izgovor je tačan."
+        : "Hrvatski i bosanski čitaju našu latinicu potpuno isto kao srpski, tako da je izgovor tačan.";
+      els.status.textContent = "Glas: " + v.name + " (" + langLabel(v) + "). " + same;
+    } else if (q === "close") {
+      els.status.className = "voice-status good";
+      els.status.textContent = "Glas: " + v.name + " (" + langLabel(v) +
+        "). Blizak jezik — razumjećeš sve, ali poneki akcenat neće biti naš.";
     } else {
       els.status.className = "voice-status warn";
-      els.status.textContent = "Na ovom uređaju nema srpskog glasa, pa se koristi " + langLabel(v) +
-        ". Razumljivo je, ali izgovor neće biti tačan — uputstvo ispod kaže kako da dodaš srpski glas.";
+      els.status.textContent = "Na ovom uređaju nema našeg glasa, pa se koristi " + langLabel(v) +
+        ". Razumljivo je, ali izgovor neće biti tačan — uputstvo ispod kaže kako da dodaš dobar glas.";
     }
-    els.adaptRow.style.display = Voice.isGoodVoice() ? "none" : "flex";
+    els.adaptRow.style.display = q === "foreign" ? "flex" : "none";
   }
 
   function syncSettingsUI() {
@@ -332,7 +340,7 @@
     updateStatus();
     // A device that already has a Serbian voice needs no setup, so collapse
     // the panel and let the student get straight to the lessons.
-    if (Voice.isGoodVoice()) els.settings.open = false;
+    if (Voice.quality() === "exact") els.settings.open = false;
   });
   if (Voice.supported) {
     speechSynthesis.addEventListener("voiceschanged", () => {

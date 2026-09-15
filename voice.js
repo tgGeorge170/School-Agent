@@ -50,6 +50,17 @@ const Voice = (function () {
     return s;
   }
 
+  // Croatian and Bosnian read Serbian Latin exactly as written — same
+  // phonology, same alphabet — so they count as a correct voice, not a
+  // fallback. Slovenian and Macedonian are close but not the same.
+  function quality(v) {
+    if (!v) return "none";
+    const base = baseLang(v);
+    if (["sr", "hr", "bs", "sh", "cnr"].indexOf(base) !== -1) return "exact";
+    if (["sl", "mk"].indexOf(base) !== -1) return "close";
+    return "foreign";
+  }
+
   function isSouthSlavic(v) {
     return v && ["sr", "hr", "bs", "sh", "cnr", "sl", "mk"].indexOf(baseLang(v)) !== -1;
   }
@@ -405,6 +416,7 @@ const Voice = (function () {
     voices: () => sortedVoices(),
     voice: currentVoice,
     isGoodVoice: () => isSouthSlavic(currentVoice()),
+    quality: () => quality(currentVoice()),
     settings: () => Object.assign({}, settings),
     set: set,
     splitSentences: splitSentences,

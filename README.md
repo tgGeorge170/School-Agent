@@ -25,12 +25,20 @@ from a bottom bar like a phone app:
   worth cross-studying with.
 - **🔊 Predavanja** — lessons explained in Serbian, read aloud by the device's
   own speech engine (Web Speech API): free, no API key, no account, works on
-  a phone and on a laptop. The panel at the top picks the best Serbian voice
-  it can find, lets you change voice, speed and pitch, and says what to
-  install when the device has no Serbian voice (Edge on a laptop already has
-  one; Android gets it from Google Speech Services). If only a foreign voice
-  is available, the text is respelled into that language's spelling so it
-  still comes out close to Serbian. The same tab reads any pasted text aloud.
+  a phone and on a laptop. The panel at the top picks the best voice it can
+  find, lets you change voice, speed and pitch, and says what to install when
+  the device has none.
+
+  No Serbian voice ships with Windows or macOS, so the app treats Croatian
+  and Bosnian as equally correct: they read Serbian Latin with the same
+  letters and the same phonology, and Croatian is ijekavian like Republika
+  Srpska. Both Windows (Matej) and macOS (Lana) have a Croatian voice one
+  language-pack install away, which every browser then sees — Chrome and
+  Firefox included. Android has a real Serbian voice through Google Speech
+  Services, and Edge has a natural online Serbian voice with nothing to
+  install. If only a foreign voice is available, the text is respelled into
+  that language's spelling so it still comes out close to Serbian. The same
+  tab reads any pasted text aloud.
 
   Before speaking, the text is normalised for the ear: `G01` becomes
   "ge nula jedan", `mm/min` becomes "milimetara u minuti", `npr.` becomes
