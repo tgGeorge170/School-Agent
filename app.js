@@ -249,6 +249,60 @@
   render("");
 })();
 
+// ---------- C reference ----------
+(function () {
+  const listEl = document.getElementById("cref-list");
+  const searchEl = document.getElementById("cref-search");
+  if (!listEl) return;
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function render(filter) {
+    const q = (filter || "").trim().toLowerCase();
+    listEl.innerHTML = "";
+
+    const groups = [];
+    const groupIndex = {};
+    CCODES.forEach((it) => {
+      const cat = it.cat[currentLang] || it.cat.en;
+      const desc = it.desc[currentLang] || it.desc.en;
+      if (q && !it.code.toLowerCase().includes(q) && !desc.toLowerCase().includes(q) && !cat.toLowerCase().includes(q)) return;
+      if (!(cat in groupIndex)) {
+        groupIndex[cat] = groups.length;
+        groups.push({ cat, items: [] });
+      }
+      groups[groupIndex[cat]].items.push({ code: it.code, desc });
+    });
+
+    groups.forEach((g) => {
+      const h = document.createElement("div");
+      h.className = "section-heading";
+      h.textContent = g.cat;
+      listEl.appendChild(h);
+      g.items.forEach((it) => {
+        const row = document.createElement("div");
+        row.className = "gcode-item";
+        row.innerHTML = `<span class="gcode-code">${escapeHtml(it.code)}</span><span class="gcode-desc">${escapeHtml(it.desc)}</span>`;
+        listEl.appendChild(row);
+      });
+    });
+
+    if (groups.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "hint";
+      empty.textContent = "Nema rezultata.";
+      listEl.appendChild(empty);
+    }
+  }
+
+  searchEl.addEventListener("input", () => render(searchEl.value));
+  render("");
+})();
+
 // ---------- Curriculum ----------
 (function () {
   const listEl = document.getElementById("curriculum-list");

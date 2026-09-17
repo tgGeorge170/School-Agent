@@ -118,6 +118,37 @@ const MCODES = [
   { code: "M30", cat: { sr: "Kontrola programa", en: "Program control" }, desc: { sr: "Kraj programa, povratak na početak", en: "End of program, reset to the start" } },
 ];
 
+// C/C++ quick reference — matches "Kreiranje programa u C/C++" (Računari i
+// programiranje, 3. razred): osnove, linijska i razgranata struktura.
+const CCODES = [
+  { code: "#include <stdio.h>", cat: { sr: "Osnovna struktura", en: "Basic structure" }, desc: { sr: "Uključuje standardnu biblioteku za ulaz/izlaz (printf, scanf)", en: "Includes the standard I/O library (printf, scanf)" } },
+  { code: "int main() { }", cat: { sr: "Osnovna struktura", en: "Basic structure" }, desc: { sr: "Glavna funkcija — izvršavanje programa uvijek počinje ovdje", en: "Main function — program execution always starts here" } },
+  { code: "return 0;", cat: { sr: "Osnovna struktura", en: "Basic structure" }, desc: { sr: "Završava program i vraća status (0 = uspješno izvršen)", en: "Ends the program and returns a status (0 = success)" } },
+  { code: "//  /* */", cat: { sr: "Osnovna struktura", en: "Basic structure" }, desc: { sr: "Komentar u jednom redu (//) ili na više redova (/* ... */)", en: "Single-line (//) or multi-line (/* ... */) comment" } },
+  { code: "printf(\"...\", var);", cat: { sr: "Ulaz/izlaz", en: "Input/output" }, desc: { sr: "Ispisuje tekst i vrijednosti promjenljivih na ekran", en: "Prints text and variable values to the screen" } },
+  { code: "scanf(\"%d\", &var);", cat: { sr: "Ulaz/izlaz", en: "Input/output" }, desc: { sr: "Učitava vrijednost sa tastature u promjenljivu (obavezan & ispred imena)", en: "Reads a value from the keyboard into a variable (needs & before the name)" } },
+  { code: "%d", cat: { sr: "Format specifikatori", en: "Format specifiers" }, desc: { sr: "Format za cio broj (int)", en: "Format for a whole number (int)" } },
+  { code: "%f", cat: { sr: "Format specifikatori", en: "Format specifiers" }, desc: { sr: "Format za decimalni broj (float)", en: "Format for a decimal number (float)" } },
+  { code: "%c", cat: { sr: "Format specifikatori", en: "Format specifiers" }, desc: { sr: "Format za jedan karakter (char)", en: "Format for a single character (char)" } },
+  { code: "%s", cat: { sr: "Format specifikatori", en: "Format specifiers" }, desc: { sr: "Format za niz karaktera (tekst)", en: "Format for a string of characters (text)" } },
+  { code: "int", cat: { sr: "Tipovi podataka", en: "Data types" }, desc: { sr: "Cio broj (npr. 5, -12)", en: "Whole number (e.g. 5, -12)" } },
+  { code: "float / double", cat: { sr: "Tipovi podataka", en: "Data types" }, desc: { sr: "Decimalni broj — float jednostruke, double dvostruke preciznosti", en: "Decimal number — float is single precision, double is double precision" } },
+  { code: "char", cat: { sr: "Tipovi podataka", en: "Data types" }, desc: { sr: "Jedan karakter, npr. 'a'", en: "A single character, e.g. 'a'" } },
+  { code: "const", cat: { sr: "Tipovi podataka", en: "Data types" }, desc: { sr: "Označava konstantu — vrijednost se poslije ne može mijenjati", en: "Marks a constant — the value can't be changed afterward" } },
+  { code: "+  -  *  /  %", cat: { sr: "Operatori", en: "Operators" }, desc: { sr: "Sabiranje, oduzimanje, množenje, dijeljenje, ostatak pri dijeljenju", en: "Add, subtract, multiply, divide, remainder (modulo)" } },
+  { code: "==  !=  >  <  >=  <=", cat: { sr: "Operatori", en: "Operators" }, desc: { sr: "Operatori poređenja — rezultat je tačno ili netačno", en: "Comparison operators — the result is true or false" } },
+  { code: "&&  ||  !", cat: { sr: "Operatori", en: "Operators" }, desc: { sr: "Logičko I, ILI, NE — spajanje više uslova", en: "Logical AND, OR, NOT — combining multiple conditions" } },
+  { code: "if (uslov) { }", cat: { sr: "Grananje", en: "Branching" }, desc: { sr: "Izvršava blok koda samo ako je uslov tačan", en: "Runs a block of code only if the condition is true" } },
+  { code: "if () {} else {}", cat: { sr: "Grananje", en: "Branching" }, desc: { sr: "Bira jedan od dva bloka koda prema uslovu", en: "Picks one of two code blocks based on the condition" } },
+  { code: "else if ()", cat: { sr: "Grananje", en: "Branching" }, desc: { sr: "Provjerava dodatni uslov ako prethodni nije bio tačan", en: "Checks another condition if the previous one wasn't true" } },
+  { code: "switch (var) { case: }", cat: { sr: "Grananje", en: "Branching" }, desc: { sr: "Bira granu koda prema tačnoj vrijednosti promjenljive", en: "Picks a branch based on the variable's exact value" } },
+  { code: "for (i=0; i<n; i++) { }", cat: { sr: "Petlje", en: "Loops" }, desc: { sr: "Petlja sa unaprijed poznatim brojem ponavljanja", en: "Loop with a known number of repetitions" } },
+  { code: "while (uslov) { }", cat: { sr: "Petlje", en: "Loops" }, desc: { sr: "Ponavlja blok koda dok je uslov tačan", en: "Repeats a block while the condition is true" } },
+  { code: "do { } while (uslov);", cat: { sr: "Petlje", en: "Loops" }, desc: { sr: "Kao while, ali se blok izvrši bar jednom prije provjere", en: "Like while, but the block runs at least once before checking" } },
+  { code: "int niz[10];", cat: { sr: "Nizovi", en: "Arrays" }, desc: { sr: "Deklariše niz od 10 cijelih brojeva", en: "Declares an array of 10 whole numbers" } },
+  { code: "niz[0]", cat: { sr: "Nizovi", en: "Arrays" }, desc: { sr: "Pristup prvom elementu niza — indeksi počinju od 0", en: "Accesses the first array element — indices start at 0" } },
+];
+
 const CURRICULUM = [
   {
     name: { sr: "CNC програмирање", en: "CNC Programming" },
