@@ -16,7 +16,8 @@
 (function () {
   const listEl = document.getElementById("schedule-list");
   if (!listEl) return;
-  const todayName = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"][new Date().getDay()];
+  const dayNames = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"];
+  const todayName = dayNames[new Date().getDay()];
 
   listEl.innerHTML = "";
   SCHEDULE.forEach((day) => {
@@ -30,6 +31,76 @@
       div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${PERIOD_TIMES[i] || i + 1 + "."}</span><span class="journal-subject">${cls}</span></div>`;
       listEl.appendChild(div);
     });
+  });
+
+  // ---- Recurring weekly calendar export ----
+  // A cron/push-notification approach only lasts 7 days and needs an active
+  // session — a recurring calendar event, imported once, notifies forever
+  // via the phone's own calendar app with no ongoing dependency on this app.
+  const exportBtn = document.getElementById("export-schedule-btn");
+  if (!exportBtn) return;
+
+  const DAY_INFO = {
+    Ponedjeljak: { dow: 1, byday: "MO" },
+    Utorak: { dow: 2, byday: "TU" },
+    Srijeda: { dow: 3, byday: "WE" },
+    Četvrtak: { dow: 4, byday: "TH" },
+    Petak: { dow: 5, byday: "FR" },
+  };
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function icsEscape(str) {
+    return String(str || "").replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
+  }
+  function nextDateForDow(targetDow) {
+    const d = new Date();
+    d.setDate(d.getDate() + ((targetDow - d.getDay() + 7) % 7));
+    return d;
+  }
+  function fmtLocal(d, hh, mm) {
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(hh)}${pad(mm)}00`;
+  }
+  function parseTime(range, part) {
+    const [start, end] = range.split("–");
+    const [h, m] = (part === "start" ? start : end).split(":").map(Number);
+    return { h, m };
+  }
+
+  exportBtn.addEventListener("click", () => {
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CNC Skolski Pomocnik//Raspored//SR", "CALSCALE:GREGORIAN"];
+    SCHEDULE.forEach((day) => {
+      const info = DAY_INFO[day.day];
+      if (!info) return;
+      const date = nextDateForDow(info.dow);
+      const startT = parseTime(PERIOD_TIMES[0], "start");
+      const endT = parseTime(PERIOD_TIMES[day.classes.length - 1], "end");
+      lines.push(
+        "BEGIN:VEVENT",
+        `UID:raspored-${info.byday}@cnc-companion.local`,
+        `DTSTAMP:${fmtLocal(new Date(), 0, 0)}Z`,
+        `DTSTART:${fmtLocal(date, startT.h, startT.m)}`,
+        `DTEND:${fmtLocal(date, endT.h, endT.m)}`,
+        `RRULE:FREQ=WEEKLY;BYDAY=${info.byday}`,
+        `SUMMARY:${icsEscape("Nastava — " + day.day)}`,
+        `DESCRIPTION:${icsEscape(day.classes.join("\n"))}`,
+        "BEGIN:VALARM",
+        "ACTION:DISPLAY",
+        "DESCRIPTION:Podsjetnik na nastavu",
+        "TRIGGER:-PT1H",
+        "END:VALARM",
+        "END:VEVENT"
+      );
+    });
+    lines.push("END:VCALENDAR");
+    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "raspored.ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
 })();
 
