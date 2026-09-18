@@ -86,7 +86,7 @@
         "BEGIN:VALARM",
         "ACTION:DISPLAY",
         "DESCRIPTION:Podsjetnik na nastavu",
-        "TRIGGER:-PT1H",
+        "TRIGGER:-PT2H20M",
         "END:VALARM",
         "END:VEVENT"
       );
