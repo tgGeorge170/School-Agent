@@ -11,4 +11,9 @@ VAPID_SUBJECT = "mailto:djordjerad009@gmail.com"
 VAPID_PUBLIC_KEY = "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ"
 
 [triggers]
-crons = ["0 6 * * *"]
+# 10:50 Europe/Sarajevo local time, expressed as fixed UTC crons since
+# Workers cron triggers don't observe DST: 09:50 UTC (CET, winter months)
+# and 08:50 UTC (CEST, summer months). This drifts by an hour for the one
+# week each spring/autumn when the EU's actual DST switchover (last Sunday
+# of March/October) doesn't line up with these month boundaries.
+crons = ["50 9 * 1,2,3,11,12 *", "50 8 * 4,5,6,7,8,9,10 *"]
