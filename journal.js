@@ -208,6 +208,13 @@ const JOURNAL_SUBJECTS = [
     if (days === 1) return "sutra";
     return `za ${days} dana`;
   }
+  // Let push.js (if loaded) know the test list changed, so it can sync
+  // subject/date/note to the reminder server when push is enabled. journal.js
+  // has no dependency on push.js either way — this fires into the void if
+  // nothing is listening.
+  function notifyTestsChanged(tests) {
+    document.dispatchEvent(new CustomEvent("cncTestsChanged", { detail: tests }));
+  }
 
   function renderTests() {
     const tests = load(TESTS_KEY).sort((a, b) => (a.date > b.date ? 1 : -1));
@@ -234,8 +241,10 @@ const JOURNAL_SUBJECTS = [
         downloadIcs(`test-${slugForFilename(tst.subject)}.ics`, buildIcs([tst]));
       });
       div.querySelector(".journal-del").addEventListener("click", () => {
-        save(TESTS_KEY, load(TESTS_KEY).filter((x) => x.id !== tst.id));
+        const remaining = load(TESTS_KEY).filter((x) => x.id !== tst.id);
+        save(TESTS_KEY, remaining);
         renderTests();
+        notifyTestsChanged(remaining);
       });
       testsList.appendChild(div);
     });
@@ -264,6 +273,7 @@ const JOURNAL_SUBJECTS = [
     testDate.value = "";
     testNote.value = "";
     renderTests();
+    notifyTestsChanged(tests);
   });
 
   // ---------- Grades ----------

@@ -1,0 +1,30 @@
+name = "cnc-pomocnik-push"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# @block65/webcrypto-web-push is built on the Web Crypto API and shouldn't
+# need this, but if `wrangler deploy` complains about missing Node built-ins,
+# uncomment the line below.
+# compatibility_flags = ["nodejs_compat"]
+
+# Create with: wrangler kv namespace create CNC_PUSH
+# then paste the returned id below.
+kv_namespaces = [
+  { binding = "CNC_PUSH", id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }
+]
+
+# Runs once a day and pushes reminders for any test 2 days out or due today.
+# Cron syntax is UTC. "0 6 * * *" = 06:00 UTC daily.
+[triggers]
+crons = ["0 6 * * *"]
+
+# Non-secret config. VAPID_PUBLIC_KEY is safe here — it's also shipped in
+# push.js client-side. VAPID_SUBJECT should be a mailto: or https: URL that
+# identifies you to push services (contact info if they need to reach you
+# about abuse) — put your own email here.
+#
+# VAPID_PRIVATE_KEY is NOT here on purpose — never put it in this file or
+# commit it. Set it with: wrangler secret put VAPID_PRIVATE_KEY
+[vars]
+VAPID_SUBJECT = "mailto:djordjerad009@gmail.com"
+VAPID_PUBLIC_KEY = "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ"

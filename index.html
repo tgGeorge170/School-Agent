@@ -218,6 +218,11 @@
       Preuzima .ics fajl — otvori ga i uveze se u Google/Apple kalendar, koji te onda podsjeti i kad aplikacija nije otvorena. Svaki test dobija podsjetnik dva dana prije i sat vremena prije.
     </div>
 
+    <button type="button" id="push-toggle-btn" class="add-btn secondary">🔔 Omogući podsjetnike na telefon</button>
+    <div class="hint" id="push-status" style="margin: 0.4rem 0 1rem;">
+      Šalje samo predmet, datum i napomenu testova na server da bi mogao poslati podsjetnik — ništa drugo iz dnevnika. Radi najpouzdanije kad je aplikacija instalirana preko "Add to Home Screen".
+    </div>
+
     <div id="tests-list"></div>
   </div>
 
@@ -255,6 +260,7 @@
 
 <script src="i18n.js"></script>
 <script src="content-data.js"></script>
+<script src="push.js"></script>
 <script src="journal.js"></script>
 <script src="app.js"></script>
 </body>

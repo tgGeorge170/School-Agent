@@ -1,0 +1,4 @@
+# Copy this file to .dev.vars (gitignored) for local `wrangler dev` testing.
+# In production this is set with `wrangler secret put VAPID_PRIVATE_KEY` —
+# never put the real private key in a committed file, "example" or not.
+VAPID_PRIVATE_KEY=paste-your-own-vapid-private-key-here
