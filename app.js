@@ -462,3 +462,83 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
+
+// ---------- Push notifications ----------
+(function () {
+  const PUSH_CONFIG = {
+    vapidPublicKey: "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ",
+    workerUrl: "https://school-agent-push.djordjerad009.workers.dev",
+  };
+
+  const btn = document.getElementById("enable-push-btn");
+  const statusEl = document.getElementById("push-status");
+  if (!btn) return;
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+  }
+
+  function supported() {
+    return "serviceWorker" in navigator && "PushManager" in window;
+  }
+
+  async function updateButton() {
+    if (!supported()) {
+      btn.disabled = true;
+      statusEl.textContent = "Obavještenja nisu podržana u ovom pregledaču.";
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    btn.textContent = sub ? "🔕 Isključi dnevna obavještenja" : "🔔 Uključi dnevna obavještenja";
+  }
+
+  btn.addEventListener("click", async () => {
+    if (!supported()) return;
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+
+    if (existing) {
+      try {
+        await fetch(`${PUSH_CONFIG.workerUrl}/api/unsubscribe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: existing.endpoint }),
+        });
+      } catch {}
+      await existing.unsubscribe();
+      await updateButton();
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      statusEl.textContent = "Dozvola za obavještenja je odbijena.";
+      return;
+    }
+
+    try {
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(PUSH_CONFIG.vapidPublicKey),
+      });
+      await fetch(`${PUSH_CONFIG.workerUrl}/api/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+    } catch (err) {
+      statusEl.textContent = "Prijava na obavještenja nije uspjela.";
+    }
+    await updateButton();
+  });
+
+  if (supported()) {
+    navigator.serviceWorker.ready.then(updateButton);
+  } else {
+    updateButton();
+  }
+})();

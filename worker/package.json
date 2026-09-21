@@ -1,0 +1,6 @@
+{
+  "name": "school-agent-push",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cloudflare Worker: web-push subscription storage + daily reminder cron for CNC School Companion"
+}

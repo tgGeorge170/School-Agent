@@ -1,0 +1,14 @@
+name = "school-agent-push"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[[kv_namespaces]]
+binding = "CNC_PUSH"
+id = "a503e686390d43ada4dd07d8e9e0060a"
+
+[vars]
+VAPID_SUBJECT = "mailto:djordjerad009@gmail.com"
+VAPID_PUBLIC_KEY = "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ"
+
+[triggers]
+crons = ["0 6 * * *"]
