@@ -1,6 +1,7 @@
-// Kept in sync by hand with the SCHEDULE/PERIOD_TIMES in ../../content-data.js
-// — duplicated here because the worker runs isolated from the browser bundle
-// and needs the weekly schedule to build the daily reminder's body text.
+// Weekly schedule for 3 CNC, group G1 — kept in sync by hand with the
+// SCHEDULE/PERIOD_TIMES in ../../content-data.js, duplicated here because
+// the worker runs isolated from the browser bundle and needs this to build
+// the daily reminder's body text.
 
 const PERIOD_TIMES = [
   "13:10–13:55",
