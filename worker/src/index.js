@@ -22,8 +22,8 @@ function isValidSubscription(sub) {
   return !!(sub && sub.endpoint && sub.keys && sub.keys.p256dh && sub.keys.auth);
 }
 
-async function sendDailyNotifications(env) {
-  const payload = {
+async function sendDailyNotifications(env, payload) {
+  payload = payload || {
     title: "CNC Školski Pomoćnik",
     body: "Ne zaboravi proveriti raspored, testove i zadatke za danas.",
   };
@@ -89,6 +89,14 @@ export default {
       }
       const key = await sha256Hex(body.endpoint);
       await env.CNC_PUSH.delete(key);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === "/api/test-notify" && request.method === "POST") {
+      if (request.headers.get("X-Admin-Secret") !== env.ADMIN_SECRET) {
+        return json({ error: "forbidden" }, 403);
+      }
+      await sendDailyNotifications(env, { title: "CNC Školski Pomoćnik", body: "Test obavještenje — radi!" });
       return json({ ok: true });
     }
 
