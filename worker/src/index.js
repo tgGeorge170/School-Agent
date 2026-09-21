@@ -1,4 +1,5 @@
 import { sendWebPush } from "./webpush.js";
+import { buildTodayScheduleNotification } from "./schedule.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -23,10 +24,7 @@ function isValidSubscription(sub) {
 }
 
 async function sendDailyNotifications(env, payload) {
-  payload = payload || {
-    title: "CNC Školski Pomoćnik",
-    body: "Ne zaboravi proveriti raspored, testove i zadatke za danas.",
-  };
+  payload = payload || buildTodayScheduleNotification();
   const vapid = {
     vapidSubject: env.VAPID_SUBJECT,
     vapidPublicKey: env.VAPID_PUBLIC_KEY,
@@ -96,7 +94,7 @@ export default {
       if (request.headers.get("X-Admin-Secret") !== env.ADMIN_SECRET) {
         return json({ error: "forbidden" }, 403);
       }
-      await sendDailyNotifications(env, { title: "CNC Školski Pomoćnik", body: "Test obavještenje — radi!" });
+      await sendDailyNotifications(env);
       return json({ ok: true });
     }
 
