@@ -31,6 +31,7 @@ async function sendDailyNotifications(env, payload) {
     vapidPrivateKey: env.VAPID_PRIVATE_KEY,
   };
 
+  const results = [];
   let cursor;
   do {
     const list = await env.CNC_PUSH.list({ cursor });
@@ -40,16 +41,18 @@ async function sendDailyNotifications(env, payload) {
       const subscription = JSON.parse(raw);
       try {
         const res = await sendWebPush(subscription, payload, vapid);
+        const bodyText = await res.text().catch(() => "");
+        results.push({ key: key.name, status: res.status, body: bodyText.slice(0, 300) });
         if (res.status === 404 || res.status === 410) {
           await env.CNC_PUSH.delete(key.name);
         }
       } catch (err) {
-        // Transient failure (network, push service outage) — leave the
-        // subscription in place and retry on the next scheduled run.
+        results.push({ key: key.name, error: String(err && err.stack ? err.stack : err) });
       }
     }
     cursor = list.list_complete ? undefined : list.cursor;
   } while (cursor);
+  return results;
 }
 
 export default {
@@ -94,8 +97,8 @@ export default {
       if (request.headers.get("X-Admin-Secret") !== env.ADMIN_SECRET) {
         return json({ error: "forbidden" }, 403);
       }
-      await sendDailyNotifications(env);
-      return json({ ok: true });
+      const results = await sendDailyNotifications(env);
+      return json({ ok: true, results });
     }
 
     if (url.pathname === "/" || url.pathname === "/health") {
