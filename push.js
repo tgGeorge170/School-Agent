@@ -219,7 +219,7 @@
     const tick = () => {
       const left = Math.ceil((dueAt - Date.now()) / 1000);
       if (left > 0) {
-        el.testResult.textContent = `Obavještenje stiže za ${left} s — zatvori aplikaciju i zaključaj telefon.`;
+        el.testResult.textContent = `Obavještenje stiže za ${left} s — pritisni Home i zaključaj telefon (nemoj sklanjati aplikaciju iz nedavnih).`;
         setTimeout(tick, 1000);
         return;
       }
