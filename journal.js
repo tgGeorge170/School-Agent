@@ -42,6 +42,7 @@ const JOURNAL_SUBJECTS = [
   }
   function save(key, arr) {
     localStorage.setItem(key, JSON.stringify(arr));
+    window.dispatchEvent(new CustomEvent("journal-changed", { detail: { key } }));
   }
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);

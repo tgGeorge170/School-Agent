@@ -2,14 +2,22 @@
 (function () {
   const buttons = document.querySelectorAll(".tabbar button");
   const panels = document.querySelectorAll(".tab-panel");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.tab;
-      buttons.forEach((b) => b.classList.toggle("active", b === btn));
-      panels.forEach((p) => p.classList.toggle("active", p.id === target));
-      window.scrollTo(0, 0);
-    });
-  });
+  function show(target) {
+    if (![...panels].some((p) => p.id === target)) return;
+    buttons.forEach((b) => b.classList.toggle("active", b.dataset.tab === target));
+    panels.forEach((p) => p.classList.toggle("active", p.id === target));
+    window.scrollTo(0, 0);
+  }
+  buttons.forEach((btn) => btn.addEventListener("click", () => show(btn.dataset.tab)));
+  // Notification taps open e.g. ./#journal
+  const openFromHash = () => {
+    if (location.hash) {
+      show(location.hash.slice(1));
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+  };
+  window.addEventListener("hashchange", openFromHash);
+  openFromHash();
 })();
 
 // ---------- Schedule ----------
@@ -31,76 +39,6 @@
       div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${PERIOD_TIMES[i] || i + 1 + "."}</span><span class="journal-subject">${cls}</span></div>`;
       listEl.appendChild(div);
     });
-  });
-
-  // ---- Recurring weekly calendar export ----
-  // A cron/push-notification approach only lasts 7 days and needs an active
-  // session — a recurring calendar event, imported once, notifies forever
-  // via the phone's own calendar app with no ongoing dependency on this app.
-  const exportBtn = document.getElementById("export-schedule-btn");
-  if (!exportBtn) return;
-
-  const DAY_INFO = {
-    Ponedjeljak: { dow: 1, byday: "MO" },
-    Utorak: { dow: 2, byday: "TU" },
-    Srijeda: { dow: 3, byday: "WE" },
-    Četvrtak: { dow: 4, byday: "TH" },
-    Petak: { dow: 5, byday: "FR" },
-  };
-
-  function pad(n) { return String(n).padStart(2, "0"); }
-  function icsEscape(str) {
-    return String(str || "").replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
-  }
-  function nextDateForDow(targetDow) {
-    const d = new Date();
-    d.setDate(d.getDate() + ((targetDow - d.getDay() + 7) % 7));
-    return d;
-  }
-  function fmtLocal(d, hh, mm) {
-    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(hh)}${pad(mm)}00`;
-  }
-  function parseTime(range, part) {
-    const [start, end] = range.split("–");
-    const [h, m] = (part === "start" ? start : end).split(":").map(Number);
-    return { h, m };
-  }
-
-  exportBtn.addEventListener("click", () => {
-    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CNC Skolski Pomocnik//Raspored//SR", "CALSCALE:GREGORIAN"];
-    SCHEDULE.forEach((day) => {
-      const info = DAY_INFO[day.day];
-      if (!info) return;
-      const date = nextDateForDow(info.dow);
-      const startT = parseTime(PERIOD_TIMES[0], "start");
-      const endT = parseTime(PERIOD_TIMES[day.classes.length - 1], "end");
-      lines.push(
-        "BEGIN:VEVENT",
-        `UID:raspored-${info.byday}@cnc-companion.local`,
-        `DTSTAMP:${fmtLocal(new Date(), 0, 0)}Z`,
-        `DTSTART:${fmtLocal(date, startT.h, startT.m)}`,
-        `DTEND:${fmtLocal(date, endT.h, endT.m)}`,
-        `RRULE:FREQ=WEEKLY;BYDAY=${info.byday}`,
-        `SUMMARY:${icsEscape("Nastava — " + day.day)}`,
-        `DESCRIPTION:${icsEscape(day.classes.join("\n"))}`,
-        "BEGIN:VALARM",
-        "ACTION:DISPLAY",
-        "DESCRIPTION:Podsjetnik na nastavu",
-        "TRIGGER:-PT2H20M",
-        "END:VALARM",
-        "END:VEVENT"
-      );
-    });
-    lines.push("END:VCALENDAR");
-    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "raspored.ics";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
 })();
 
@@ -462,83 +400,3 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
-
-// ---------- Push notifications ----------
-(function () {
-  const PUSH_CONFIG = {
-    vapidPublicKey: "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ",
-    workerUrl: "https://school-agent-push.djordjerad009.workers.dev",
-  };
-
-  const btn = document.getElementById("enable-push-btn");
-  const statusEl = document.getElementById("push-status");
-  if (!btn) return;
-
-  function urlBase64ToUint8Array(base64String) {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-    const rawData = atob(base64);
-    return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
-  }
-
-  function supported() {
-    return "serviceWorker" in navigator && "PushManager" in window;
-  }
-
-  async function updateButton() {
-    if (!supported()) {
-      btn.disabled = true;
-      statusEl.textContent = "Obavještenja nisu podržana u ovom pregledaču.";
-      return;
-    }
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    btn.textContent = sub ? "🔕 Isključi dnevna obavještenja" : "🔔 Uključi dnevna obavještenja";
-  }
-
-  btn.addEventListener("click", async () => {
-    if (!supported()) return;
-    const reg = await navigator.serviceWorker.ready;
-    const existing = await reg.pushManager.getSubscription();
-
-    if (existing) {
-      try {
-        await fetch(`${PUSH_CONFIG.workerUrl}/api/unsubscribe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: existing.endpoint }),
-        });
-      } catch {}
-      await existing.unsubscribe();
-      await updateButton();
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      statusEl.textContent = "Dozvola za obavještenja je odbijena.";
-      return;
-    }
-
-    try {
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(PUSH_CONFIG.vapidPublicKey),
-      });
-      await fetch(`${PUSH_CONFIG.workerUrl}/api/subscribe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub),
-      });
-    } catch (err) {
-      statusEl.textContent = "Prijava na obavještenja nije uspjela.";
-    }
-    await updateButton();
-  });
-
-  if (supported()) {
-    navigator.serviceWorker.ready.then(updateButton);
-  } else {
-    updateButton();
-  }
-})();

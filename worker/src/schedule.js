@@ -1,9 +1,7 @@
-// Weekly schedule for 3 CNC, group G1 — kept in sync by hand with the
-// SCHEDULE/PERIOD_TIMES in ../../content-data.js, duplicated here because
-// the worker runs isolated from the browser bundle and needs this to build
-// the daily reminder's body text.
+// Fallback copy of SCHEDULE/PERIOD_TIMES from ../../content-data.js, used only
+// for devices that haven't synced their own schedule yet.
 
-const PERIOD_TIMES = [
+export const PERIOD_TIMES = [
   "13:10–13:55",
   "14:00–14:45",
   "14:50–15:35",
@@ -13,7 +11,7 @@ const PERIOD_TIMES = [
   "18:25–19:10",
 ];
 
-const SCHEDULE = [
+export const SCHEDULE = [
   { day: "Ponedjeljak", classes: [
     "Hidraulika i pneumatika — A. Rapaić",
     "Mašinski elementi — S. Vidović",
@@ -57,28 +55,3 @@ const SCHEDULE = [
     "Srpski jezik — M. Čekić",
   ]},
 ];
-
-const EN_TO_SR_DAY = {
-  Monday: "Ponedjeljak",
-  Tuesday: "Utorak",
-  Wednesday: "Srijeda",
-  Thursday: "Četvrtak",
-  Friday: "Petak",
-  Saturday: "Subota",
-  Sunday: "Nedjelja",
-};
-
-function todayNameInSarajevo() {
-  const en = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Sarajevo", weekday: "long" }).format(new Date());
-  return EN_TO_SR_DAY[en];
-}
-
-export function buildTodayScheduleNotification() {
-  const todayName = todayNameInSarajevo();
-  const day = SCHEDULE.find((d) => d.day === todayName);
-  if (!day) {
-    return { title: "CNC Školski Pomoćnik", body: `${todayName} — danas nema nastave po rasporedu.` };
-  }
-  const lines = day.classes.map((cls, i) => `${PERIOD_TIMES[i] || i + 1 + "."} ${cls}`);
-  return { title: `Raspored — ${todayName}`, body: lines.join("\n") };
-}

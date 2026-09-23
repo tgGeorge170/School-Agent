@@ -70,8 +70,8 @@ async function buildVapidHeader(endpoint, subject, publicKeyB64, privateKeyB64) 
   return `vapid t=${jwt}, k=${publicKeyB64}`;
 }
 
-async function encryptPayload(payloadObj, subscription) {
-  const plaintext = new TextEncoder().encode(JSON.stringify(payloadObj));
+export async function encryptPayload(payload, subscription, { salt, localKeyPair } = {}) {
+  const plaintext = typeof payload === "string" ? new TextEncoder().encode(payload) : new TextEncoder().encode(JSON.stringify(payload));
   const receiverPublicRaw = base64UrlDecode(subscription.keys.p256dh);
   const authSecret = base64UrlDecode(subscription.keys.auth);
 
@@ -82,7 +82,7 @@ async function encryptPayload(payloadObj, subscription) {
     false,
     []
   );
-  const localKeyPair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  localKeyPair = localKeyPair || (await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]));
   const localPublicRaw = new Uint8Array(await crypto.subtle.exportKey("raw", localKeyPair.publicKey));
   const sharedSecret = new Uint8Array(
     await crypto.subtle.deriveBits({ name: "ECDH", public: receiverPublicKey }, localKeyPair.privateKey, 256)
@@ -95,7 +95,7 @@ async function encryptPayload(payloadObj, subscription) {
   );
   const ikm = await hkdf(authSecret, sharedSecret, keyInfo, 32);
 
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+  salt = salt || crypto.getRandomValues(new Uint8Array(16));
   const cek = await hkdf(salt, ikm, new TextEncoder().encode("Content-Encoding: aes128gcm\0"), 16);
   const nonce = await hkdf(salt, ikm, new TextEncoder().encode("Content-Encoding: nonce\0"), 12);
 
@@ -112,18 +112,18 @@ async function encryptPayload(payloadObj, subscription) {
   return concatBytes(header, ciphertext);
 }
 
-export async function sendWebPush(subscription, payloadObj, { vapidSubject, vapidPublicKey, vapidPrivateKey }) {
+export async function sendWebPush(subscription, payloadObj, { vapidSubject, vapidPublicKey, vapidPrivateKey }, { ttl = 86400, urgency = "high", topic } = {}) {
   const body = await encryptPayload(payloadObj, subscription);
   const authorization = await buildVapidHeader(subscription.endpoint, vapidSubject, vapidPublicKey, vapidPrivateKey);
-  return fetch(subscription.endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Encoding": "aes128gcm",
-      TTL: "86400",
-      Urgency: "high",
-      Authorization: authorization,
-    },
-    body,
-  });
+  const headers = {
+    "Content-Type": "application/octet-stream",
+    "Content-Encoding": "aes128gcm",
+    TTL: String(Math.max(0, Math.floor(ttl))),
+    Urgency: urgency,
+    Authorization: authorization,
+  };
+  if (topic) headers.Topic = topic.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32);
+  return fetch(subscription.endpoint, { method: "POST", headers, body });
 }
+
+export { base64UrlEncode, base64UrlDecode };

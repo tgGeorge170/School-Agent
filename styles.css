@@ -84,7 +84,7 @@ label {
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-select, input[type=number], input[type=search], input[type=text], input[type=date], textarea {
+select, input[type=number], input[type=search], input[type=text], input[type=date], input[type=time], textarea {
   width: 100%;
   padding: 0.55rem 0.5rem;
   border: 1px solid var(--border);
@@ -389,3 +389,9 @@ ul.module-topics li { margin-bottom: 0.15rem; }
   line-height: 1.6;
 }
 .tip-list li { margin-bottom: 0.4rem; }
+
+[hidden] { display: none !important; }
+.push-state { font-size: 0.9rem; margin-bottom: 0.2rem; }
+.push-warn { margin-top: 0.6rem; }
+.push-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin: 0.8rem 0 0.2rem; font-weight: normal; text-transform: none; color: var(--text); }
+.push-check input { width: auto; margin: 0; }
