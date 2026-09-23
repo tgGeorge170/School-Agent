@@ -37,7 +37,8 @@ async function saveFile(filename, content) {
 function record() {
   return {
     settings: { ...DEFAULT_SETTINGS, ...loadJson(SETTINGS_KEY, {}) },
-    schedule: { days: window.SCHEDULE, periods: window.PERIOD_TIMES },
+    // Top-level consts from content-data.js are globals but not window properties.
+    schedule: { days: SCHEDULE, periods: PERIOD_TIMES }, // eslint-disable-line no-undef
     tests: loadJson("cncJournalTests", []),
     tasks: loadJson("cncJournalTasks", []),
   };
