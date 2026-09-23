@@ -11,7 +11,8 @@ const CORS_HEADERS = {
 };
 const PUSH_HOSTS = ["googleapis.com", "mozilla.com", "windows.com", "apple.com"];
 const MAX_BODY = 64 * 1024;
-const TEST_COOLDOWN_MS = 15e3;
+const TEST_COOLDOWN_MS = 30e3;
+const TEST_DELAY_MS = 15e3;
 const SENT_RETENTION_MS = 4 * 86400e3;
 
 function json(data, status = 200) {
@@ -154,7 +155,7 @@ async function handleStatus(request, env) {
   return json({ registered: true, settings: cleanSettings(record.settings), last: state.last || null, next: upcoming(record, Date.now()) });
 }
 
-async function handleTest(request, env) {
+async function handleTest(request, env, ctx) {
   const body = await readJson(request);
   if (!body || !validEndpoint(body.endpoint)) return json({ error: "missing endpoint" }, 400);
   const hash = await sha256Hex(body.endpoint);
@@ -162,14 +163,22 @@ async function handleTest(request, env) {
   if (!record) return json({ error: "not registered" }, 404);
   const state = await getState(env, hash);
   if (state.lastTestAt && Date.now() - state.lastTestAt < TEST_COOLDOWN_MS) return json({ error: "too soon" }, 429);
-
-  const preview = todayPreview(record, Date.now());
-  const result = await push(env, record.subscription, { ...preview, title: "✅ Obavještenja rade", body: `${preview.title}\n${preview.body}`, tag: "test" }, { ttl: 600 });
   state.lastTestAt = Date.now();
-  state.last = { at: Date.now(), status: result.status, body: result.body, title: "test" };
-  if (result.gone) await deleteDevice(env, hash);
-  else await env.CNC_PUSH.put(`state:${hash}`, JSON.stringify(state));
-  return json({ ok: result.status >= 200 && result.status < 300, status: result.status, body: result.body });
+  await env.CNC_PUSH.put(`state:${hash}`, JSON.stringify(state));
+
+  // Delayed so the user can close the app and lock the phone first.
+  ctx.waitUntil(
+    (async () => {
+      await new Promise((r) => setTimeout(r, TEST_DELAY_MS));
+      const preview = todayPreview(record, Date.now());
+      const result = await push(env, record.subscription, { ...preview, title: "✅ Obavještenja rade", body: `${preview.title}\n${preview.body}`, tag: "test" }, { ttl: 600 });
+      const latest = await getState(env, hash);
+      latest.last = { at: Date.now(), status: result.status, body: result.body, title: "test" };
+      if (result.gone) await deleteDevice(env, hash);
+      else await env.CNC_PUSH.put(`state:${hash}`, JSON.stringify(latest));
+    })()
+  );
+  return json({ ok: true, delaySeconds: TEST_DELAY_MS / 1000 });
 }
 
 async function processDevice(env, hash, now) {
@@ -230,7 +239,7 @@ async function handleAdminNotify(env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
     if (url.pathname === "/" || url.pathname === "/health") return new Response("OK", { headers: CORS_HEADERS });
@@ -244,7 +253,7 @@ export default {
         case "/api/status":
           return await handleStatus(request, env);
         case "/api/test":
-          return await handleTest(request, env);
+          return await handleTest(request, env, ctx);
         case "/api/unsubscribe": {
           const body = await readJson(request);
           if (!body || !body.endpoint) return json({ error: "missing endpoint" }, 400);

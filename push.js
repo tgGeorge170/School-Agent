@@ -206,6 +206,32 @@
     syncSoon();
   }
 
+  // Server waits before sending; meanwhile the user closes the app / locks the phone.
+  function testCountdown(seconds) {
+    const sentAt = Date.now();
+    const tick = () => {
+      const left = seconds - Math.floor((Date.now() - sentAt) / 1000);
+      if (left > 0) {
+        el.testResult.textContent = `Obavještenje stiže za ${left} s — zatvori aplikaciju i zaključaj telefon.`;
+        setTimeout(tick, 1000);
+        return;
+      }
+      el.testResult.textContent = "Poslano. Ako nije stiglo dok je aplikacija bila zatvorena, pogledaj upozorenje iznad / podešavanja baterije.";
+      setTimeout(checkTestResult, 4000);
+    };
+    tick();
+    setTimeout(() => (el.test.disabled = false), 30000);
+  }
+  async function checkTestResult() {
+    try {
+      const { data } = await api("/api/status", { endpoint: subscription.endpoint });
+      const last = data.last;
+      if (last && last.title === "test" && !(last.status >= 200 && last.status < 300)) {
+        el.testResult.textContent = `Push servis je odbio poruku (${last.status}${last.body ? ": " + last.body : ""}).`;
+      }
+    } catch (e) {}
+  }
+
   async function sendTest() {
     if (!subscription) return;
     el.test.disabled = true;
@@ -214,7 +240,8 @@
       if (dirty || !lastSyncAt) await sync();
       const { status, data } = await api("/api/test", { endpoint: subscription.endpoint });
       if (data.ok) {
-        el.testResult.textContent = "Poslano ✅ Trebalo bi da stigne za par sekundi. Ako stigne tek kad otvoriš aplikaciju, pogledaj upozorenje iznad / podešavanja baterije.";
+        testCountdown(data.delaySeconds || 15);
+        return;
       } else if (status === 429) {
         el.testResult.textContent = "Sačekaj par sekundi pa probaj ponovo.";
       } else if (status === 404) {
