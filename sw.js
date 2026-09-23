@@ -26,7 +26,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== "push-log").map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -59,7 +59,7 @@ self.addEventListener("push", (event) => {
     }
   }
   event.waitUntil(
-    self.registration.showNotification(data.title, {
+    showAndLog(data, {
       body: data.body,
       icon: "icons/icon-192.png",
       badge: "icons/icon-192.png",
@@ -71,6 +71,22 @@ self.addEventListener("push", (event) => {
     })
   );
 });
+
+// Records each received push (and whether it could be shown) so the app's
+// test button can tell "never arrived" apart from "arrived but hidden".
+async function showAndLog(data, options) {
+  const entry = { at: Date.now(), tag: data.tag || "", shown: true, error: "" };
+  try {
+    await self.registration.showNotification(data.title, options);
+  } catch (e) {
+    entry.shown = false;
+    entry.error = String(e && e.message ? e.message : e);
+  }
+  const cache = await caches.open("push-log");
+  await cache.put("./__last-push", new Response(JSON.stringify(entry)));
+  const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  clients.forEach((c) => c.postMessage({ type: "push-received", entry }));
+}
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

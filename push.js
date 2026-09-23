@@ -207,30 +207,72 @@
   }
 
   // Server waits before sending; meanwhile the user closes the app / locks the phone.
-  function testCountdown(seconds) {
+  const TEST_KEY = "cncPushTest";
+  const fmtTime = (ms) => new Date(ms).toLocaleTimeString("sr-Latn", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  function startTest(seconds) {
     const sentAt = Date.now();
+    localStorage.setItem(TEST_KEY, JSON.stringify({ sentAt, dueAt: sentAt + seconds * 1000 }));
+    testCountdown(sentAt + seconds * 1000);
+  }
+  function testCountdown(dueAt) {
     const tick = () => {
-      const left = seconds - Math.floor((Date.now() - sentAt) / 1000);
+      const left = Math.ceil((dueAt - Date.now()) / 1000);
       if (left > 0) {
         el.testResult.textContent = `Obavještenje stiže za ${left} s — zatvori aplikaciju i zaključaj telefon.`;
         setTimeout(tick, 1000);
         return;
       }
-      el.testResult.textContent = "Poslano. Ako nije stiglo dok je aplikacija bila zatvorena, pogledaj upozorenje iznad / podešavanja baterije.";
-      setTimeout(checkTestResult, 4000);
+      el.testResult.textContent = "Šaljem…";
+      setTimeout(diagnoseTest, 5000);
     };
     tick();
     setTimeout(() => (el.test.disabled = false), 30000);
   }
-  async function checkTestResult() {
+
+  async function lastReceivedPush() {
     try {
-      const { data } = await api("/api/status", { endpoint: subscription.endpoint });
-      const last = data.last;
-      if (last && last.title === "test" && !(last.status >= 200 && last.status < 300)) {
-        el.testResult.textContent = `Push servis je odbio poruku (${last.status}${last.body ? ": " + last.body : ""}).`;
-      }
-    } catch (e) {}
+      const res = await caches.match("./__last-push", { cacheName: "push-log" });
+      return res ? await res.json() : null;
+    } catch (e) {
+      return null;
+    }
   }
+
+  // Explains the last test: never sent, sent but not delivered, or delivered but hidden.
+  async function diagnoseTest() {
+    const pending = loadJson(TEST_KEY, null);
+    if (!pending || !subscription) return;
+    if (Date.now() < pending.dueAt) return testCountdown(pending.dueAt);
+    const got = await lastReceivedPush();
+    const sent = `Test poslan u ${fmtTime(pending.dueAt)}. `;
+    if (got && got.at >= pending.sentAt) {
+      const delay = Math.max(0, Math.round((got.at - pending.dueAt) / 1000));
+      if (got.shown) {
+        el.testResult.textContent = sent + `✅ Telefon ga je primio u ${fmtTime(got.at)} (${delay} s kasnije) i prikazao. Ako ga nisi vidio: Podešavanja → Aplikacije → Chrome → Obavještenja → uključi sve kategorije (i „Sajtovi”), i isključi „Ne uznemiravaj”.`;
+      } else {
+        el.testResult.textContent = sent + `⚠️ Telefon ga je primio u ${fmtTime(got.at)}, ali Android nije dozvolio prikaz (${got.error}). Uključi obavještenja: Podešavanja → Aplikacije → Chrome → Obavještenja.`;
+      }
+      localStorage.removeItem(TEST_KEY);
+      return;
+    }
+    let last = null;
+    try {
+      last = (await api("/api/status", { endpoint: subscription.endpoint })).data.last;
+    } catch (e) {}
+    if (last && last.title === "test" && last.at >= pending.sentAt && !(last.status >= 200 && last.status < 300)) {
+      el.testResult.textContent = sent + `❌ Push servis je odbio poruku (${last.status}${last.body ? ": " + last.body : ""}).`;
+      localStorage.removeItem(TEST_KEY);
+    } else if (last && last.title === "test" && last.at >= pending.sentAt) {
+      el.testResult.textContent = sent + "⏳ Server ga je predao Google-ovom push servisu, ali telefon ga još nije primio. To znači da Samsung drži Chrome uspavanim: Podešavanja → Baterija → Ograničenja upotrebe u pozadini → skloni Chrome sa „Uspavane aplikacije” / „Duboko uspavane”, i Aplikacije → Chrome → Baterija → Neograničeno.";
+    } else {
+      el.testResult.textContent = sent + "⏳ Server još nije potvrdio slanje — provjeri ponovo za par sekundi.";
+    }
+  }
+
+  navigator.serviceWorker && navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "push-received") diagnoseTest();
+  });
 
   async function sendTest() {
     if (!subscription) return;
@@ -240,7 +282,7 @@
       if (dirty || !lastSyncAt) await sync();
       const { status, data } = await api("/api/test", { endpoint: subscription.endpoint });
       if (data.ok) {
-        testCountdown(data.delaySeconds || 15);
+        startTest(data.delaySeconds || 15);
         return;
       } else if (status === 429) {
         el.testResult.textContent = "Sačekaj par sekundi pa probaj ponovo.";
@@ -277,7 +319,10 @@
     }
     if (subscription && permission !== "granted") subscription = null;
     render();
-    if (subscription) sync();
+    if (subscription) {
+      sync();
+      diagnoseTest();
+    }
   }
 
   el.toggle.addEventListener("click", async () => {
