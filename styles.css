@@ -40,6 +40,7 @@ body {
   justify-content: center;
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }
+body.player-open { padding-bottom: calc(130px + env(safe-area-inset-bottom)); }
 .app {
   width: 100%;
   max-width: 560px;
@@ -187,15 +188,15 @@ textarea { resize: vertical; }
   background: none;
   border: none;
   color: var(--muted);
-  padding: 0.5rem 0.2rem 0.45rem;
-  font-size: 0.68rem;
+  padding: 0.5rem 0.1rem 0.45rem;
+  font-size: 0.6rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
   cursor: pointer;
 }
-.tabbar button .icon { font-size: 1.25rem; }
+.tabbar button .icon { font-size: 1.15rem; }
 .tabbar button.active { color: var(--accent); font-weight: 700; }
 
 /* G-code reference */
@@ -395,3 +396,111 @@ ul.module-topics li { margin-bottom: 0.15rem; }
 .push-warn { margin-top: 0.6rem; }
 .push-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin: 0.8rem 0 0.2rem; font-weight: normal; text-transform: none; color: var(--text); }
 .push-check input { width: auto; margin: 0; }
+
+/* Lectures & voice */
+.voice-panel { padding: 0.9rem; }
+.voice-status {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.voice-status.good { background: var(--result-bg); border-color: var(--result-border); }
+.voice-status.warn { background: var(--warn-bg); border-color: var(--warn-border); }
+.voice-status.bad { background: var(--warn-bg); border-color: var(--warn-border); font-weight: 600; }
+.range-out { color: var(--muted); font-weight: 600; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.check-row {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.check-row input { width: auto; margin-top: 0.15rem; }
+.help-box { margin-top: 0.9rem; }
+.help-box summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.help-body { font-size: 0.82rem; line-height: 1.5; }
+.help-body p { margin: 0.6rem 0; }
+
+.lesson-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  font: inherit;
+}
+.lesson-row:active { background: var(--result-bg); }
+.lesson-title { font-size: 0.9rem; font-weight: 600; }
+.lesson-sub { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.lesson-crumb {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.lesson-head { margin: 1rem 0 0.8rem; }
+.lesson-head h2 { margin: 0.2rem 0 0; font-size: 1.15rem; }
+.lesson-body { font-size: 0.93rem; line-height: 1.65; }
+.lesson-body p { margin: 0.7rem 0; }
+.lesson-summary { color: var(--muted); font-style: italic; }
+.lesson-h { margin: 1.2rem 0 0.2rem; font-size: 1rem; color: var(--accent); }
+.sent { cursor: pointer; border-radius: 3px; }
+.sent.speaking { background: var(--warn-bg); box-shadow: 0 0 0 2px var(--warn-bg); }
+
+.player {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 0.8rem;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+.player-now {
+  font-size: 0.78rem;
+  color: var(--muted);
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player[hidden] { display: none; }
+.player-controls { display: flex; align-items: center; gap: 0.8rem; }
+.player-controls button {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text);
+  padding: 0.1rem 0.2rem;
+}
+.player-progress { font-size: 0.78rem; color: var(--muted); min-width: 4rem; }
