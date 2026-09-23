@@ -238,12 +238,29 @@ async function handleAdminNotify(env) {
   return results;
 }
 
+// Chrome on Android stalls at 100% on GitHub's octet-stream APK downloads;
+// re-serve the latest release with the proper APK content type.
+const APK_URL = "https://github.com/tgGeorge170/School-Agent/releases/latest/download/cnc-pomocnik.apk";
+async function serveApk() {
+  const upstream = await fetch(APK_URL, { redirect: "follow", cf: { cacheTtl: 300, cacheEverything: true } });
+  if (!upstream.ok) return new Response("APK nije dostupan", { status: 502, headers: CORS_HEADERS });
+  const headers = {
+    "Content-Type": "application/vnd.android.package-archive",
+    "Content-Disposition": 'attachment; filename="cnc-pomocnik.apk"',
+    "Cache-Control": "no-cache",
+  };
+  const len = upstream.headers.get("Content-Length");
+  if (len) headers["Content-Length"] = len;
+  return new Response(upstream.body, { headers });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
     if (url.pathname === "/" || url.pathname === "/health") return new Response("OK", { headers: CORS_HEADERS });
     if (url.pathname === "/api/vapid-public-key") return json({ key: env.VAPID_PUBLIC_KEY });
+    if (url.pathname === "/cnc-pomocnik.apk") return serveApk();
     if (request.method !== "POST") return json({ error: "not found" }, 404);
 
     try {
