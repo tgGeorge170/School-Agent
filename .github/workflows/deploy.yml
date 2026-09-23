@@ -23,6 +23,14 @@ jobs:
         working-directory: worker
         run: npm test
 
+      - name: List available secret names
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Secret names:"; echo "$SECRETS_JSON" | jq -r 'keys[]'
+          echo "Environments:"; gh api repos/${{ github.repository }}/environments --jq '.environments[].name' || true
+
       - name: Check Cloudflare access
         run: |
           echo "token set: ${{ env.CLOUDFLARE_API_TOKEN != '' }}, account id set: ${{ env.CLOUDFLARE_ACCOUNT_ID != '' }}"
