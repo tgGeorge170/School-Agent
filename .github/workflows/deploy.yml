@@ -13,6 +13,9 @@ concurrency: deploy-worker
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: fe89fdf1a9c3a41592051a8c0a0fca28
     defaults:
       run:
         working-directory: worker
@@ -23,8 +26,5 @@ jobs:
           node-version: 22
       - run: npm test
       - name: Deploy
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: fe89fdf1a9c3a41592051a8c0a0fca28
+        if: env.CLOUDFLARE_API_TOKEN != ''
         run: npx -y wrangler@4 deploy
