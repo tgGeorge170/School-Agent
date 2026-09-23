@@ -1,0 +1,85 @@
+name: Android app
+
+on:
+  push:
+    branches: [claude/notifications-problem-analysis-3nc0cb]
+    paths-ignore: ["**.md", "worker/wrangler.toml"]
+  workflow_dispatch:
+
+concurrency: android-${{ github.ref }}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build web + sync
+        working-directory: android-app
+        run: |
+          npm ci
+          npm run sync
+      - name: Build APK
+        working-directory: android-app/android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk ../../cnc-pomocnik.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: cnc-pomocnik.apk
+
+  emulator-test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r cnc-pomocnik.apk
+            node android-app/scripts/emulator-test.mjs
+
+  release:
+    needs: emulator-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+      - name: Publish as the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete android --yes --cleanup-tag || true
+          gh release create android cnc-pomocnik.apk \
+            --target "$GITHUB_SHA" --latest \
+            --title "CNC Pomoćnik — Android (build ${{ github.run_number }})" \
+            --notes "Instaliraj cnc-pomocnik.apk. Nova verzija se instalira preko stare, podaci ostaju."

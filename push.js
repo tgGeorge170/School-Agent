@@ -22,7 +22,7 @@
     testResult: $("push-test-result"),
     next: $("push-next"),
   };
-  if (!el.toggle) return;
+  if (!el.toggle || window.NativeApp) return;
 
   let ready;
   let permission = "default";

@@ -29,6 +29,8 @@
       Obavještenja su blokirana za ovu aplikaciju. Dozvoli ih: dugo drži ikonu aplikacije → ⓘ Informacije → Obavještenja → uključi, pa se vrati ovdje.
     </div>
 
+    <a class="add-btn secondary push-apk" id="push-apk" href="https://github.com/tgGeorge170/School-Agent/releases/latest/download/cnc-pomocnik.apk">📱 Preuzmi Android aplikaciju (podsjetnici uvijek na vrijeme)</a>
+
     <button type="button" id="push-toggle" class="add-btn">🔔 Uključi obavještenja</button>
 
     <div id="push-settings" hidden>
@@ -48,10 +50,10 @@
       <button type="button" id="push-test" class="add-btn secondary" style="margin-top:0.8rem;">📨 Pošalji probno obavještenje</button>
       <div class="hint" id="push-test-result"></div>
       <div id="push-next"></div>
-      <div class="hint" style="margin-top:0.6rem;">
+      <div class="hint" id="push-hint-swipe" style="margin-top:0.6rem;">
         Ne sklanjaj aplikaciju prevlačenjem iz nedavnih aplikacija i ne koristi „Zatvori sve” — Samsung tada ugasi i Chrome, pa obavještenja čekaju dok je ponovo ne otvoriš. Samo pritisni Home. U nedavnim aplikacijama možeš dodirnuti ikonu aplikacije → <b>Ostavi otvoreno</b>, da je „Zatvori sve” ne gasi.
       </div>
-      <div class="hint" style="margin-top:0.6rem;">
+      <div class="hint" id="push-hint-battery" style="margin-top:0.6rem;">
         Samsung: Podešavanja → Aplikacije → Chrome → Baterija → <b>Neograničeno</b>, i skloni Chrome sa liste „Aplikacije u stanju mirovanja”, inače telefon može zadržati obavještenja.
       </div>
     </div>

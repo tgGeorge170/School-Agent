@@ -181,6 +181,7 @@ const JOURNAL_SUBJECTS = [
       .replace(/[^a-zA-Z0-9-]/g, "");
   }
   function downloadFile(filename, content, mime) {
+    if (window.NativeApp) return window.NativeApp.saveFile(filename, content);
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

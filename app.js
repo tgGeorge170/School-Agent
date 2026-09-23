@@ -437,7 +437,7 @@
 })();
 
 // ---------- Service worker registration ----------
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && !window.NativeApp) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
