@@ -52,6 +52,24 @@ console.log(alarms.slice(0, 6).join("\n"));
 if (!alarms.some((l) => /RTC_WAKEUP/.test(l))) fail("no RTC_WAKEUP alarms scheduled");
 console.log("exact alarm permission:", sh(`adb shell appops get ${PKG} SCHEDULE_EXACT_ALARM`) || "(default)");
 
+// Read-aloud: the WebView has no Web Speech API, so the Predavanja tab must be
+// running on the native TTS plugin. An emulator image may ship without a TTS
+// engine, so only the wiring is a hard failure; voices and speech are logged.
+await evaluate(`document.querySelector('.tabbar button[data-tab="lectures"]').click()`);
+console.log("tts native backend:", await evaluate("Voice.native"));
+if (!(await evaluate("Voice.native"))) fail("voice.js is not using the native TTS plugin");
+const probe = await evaluate(`NativeApp.tts.voices().then(v => ({ ok: true, n: v.length, sr: v.filter(x => /^(sr|hr|bs)/i.test(x.lang)).map(x => x.voiceURI) }), e => ({ ok: false, code: e && e.code, msg: String(e && e.message || e) }))`);
+console.log("tts voices:", JSON.stringify(probe));
+if (!probe.ok && (probe.code === "UNIMPLEMENTED" || /not implemented/i.test(probe.msg))) fail("TextToSpeech plugin is not registered in the APK");
+await sleep(1500);
+const voiceStatus = await text("#voice-status");
+console.log("voice status:", voiceStatus);
+if (/ne podržava/.test(voiceStatus || "")) fail("Predavanja says read-aloud is unsupported");
+if (probe.ok && probe.n) {
+  const spoke = await evaluate(`Promise.race([NativeApp.tts.speak({ text: "Proba.", lang: "en-US" }).then(() => "done"), new Promise(r => setTimeout(() => r("timeout"), 8000))]).catch(e => "error: " + (e && e.message || e))`);
+  console.log("tts speak:", spoke);
+}
+
 // Test notification: 15 s, with the app sent to background.
 await evaluate(`document.getElementById("push-test").click()`);
 await sleep(1500);
