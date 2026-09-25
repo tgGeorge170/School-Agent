@@ -5,6 +5,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { App } from "@capacitor/app";
+import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import { DEFAULT_SETTINGS, remindersForDate } from "../../worker/src/reminders.js";
 import { addDays, localParts } from "../../worker/src/time.js";
 
@@ -271,8 +272,17 @@ function initUi() {
   })();
 }
 
+// Android WebView has no Web Speech API, so voice.js speaks through the
+// phone's own TTS engine instead (the same Google voices, Serbian included).
+const tts = {
+  speak: (options) => TextToSpeech.speak(options),
+  stop: () => TextToSpeech.stop(),
+  voices: () => TextToSpeech.getSupportedVoices().then((r) => r.voices || []),
+  openInstall: () => TextToSpeech.openInstall(),
+};
+
 if (Capacitor.isNativePlatform()) {
-  window.NativeApp = { saveFile };
+  window.NativeApp = { saveFile, tts };
   LocalNotifications.addListener("localNotificationActionPerformed", (e) => {
     const url = e.notification && e.notification.extra && e.notification.extra.url;
     if (url && url.includes("#")) location.hash = url.slice(url.indexOf("#"));

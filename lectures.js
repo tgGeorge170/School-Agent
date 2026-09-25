@@ -17,6 +17,7 @@
     adaptRow: $("voice-adapt-row"),
     testText: $("voice-test-text"),
     testBtn: $("voice-test-btn"),
+    installBtn: $("voice-install-btn"),
     settings: $("voice-settings"),
     browse: $("lecture-browse"),
     reader: $("lecture-reader"),
@@ -342,10 +343,17 @@
     // the panel and let the student get straight to the lessons.
     if (Voice.quality() === "exact") els.settings.open = false;
   });
-  if (Voice.supported) {
-    speechSynthesis.addEventListener("voiceschanged", () => {
-      Voice.load().then(() => { fillVoices(); updateStatus(); });
-    });
+  const reloadVoices = () => Voice.load().then(() => { fillVoices(); updateStatus(); });
+  if (typeof speechSynthesis !== "undefined" && speechSynthesis.addEventListener) {
+    speechSynthesis.addEventListener("voiceschanged", reloadVoices);
+  }
+
+  // In the APK a voice installed from Android settings shows up only once the
+  // student comes back to the app, so look again then.
+  if (Voice.openInstall) {
+    els.installBtn.hidden = false;
+    els.installBtn.addEventListener("click", () => Voice.openInstall().catch(() => {}));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reloadVoices(); });
   }
   syncSettingsUI();
   renderBrowse();

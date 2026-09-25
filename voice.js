@@ -22,7 +22,12 @@ const Voice = (function () {
   let listeners = {};
   let state = "idle"; // idle | speaking | paused
 
-  const supported = typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
+  const webSupported = typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
+  // Inside the Android app (APK) the WebView has no Web Speech API; native.js
+  // hands us the phone's own TTS engine instead.
+  const native = typeof window !== "undefined" && window.NativeApp && window.NativeApp.tts ? window.NativeApp.tts : null;
+  const supported = !!native || webSupported;
+  let token = 0; // bumped on stop/jump so a late native "done" is ignored
 
   // ---------- voice discovery ----------
 
@@ -65,9 +70,31 @@ const Voice = (function () {
     return v && ["sr", "hr", "bs", "sh", "cnr", "sl", "mk"].indexOf(baseLang(v)) !== -1;
   }
 
-  function loadVoices() {
+  // The native engine takes a moment to start, and reports voices by index.
+  function loadNativeVoices() {
     return new Promise((resolve) => {
-      if (!supported) return resolve([]);
+      let tries = 0;
+      const retry = () => (++tries > 20 ? resolve(voices) : setTimeout(attempt, 250));
+      const attempt = () => {
+        native.voices().then((list) => {
+          voices = list.map((v, i) => ({
+            name: v.name + " (" + v.voiceURI + ")",
+            lang: v.lang,
+            voiceURI: v.voiceURI,
+            localService: v.localService,
+            index: i,
+          }));
+          if (voices.length) resolve(voices); else retry();
+        }).catch(retry);
+      };
+      attempt();
+    });
+  }
+
+  function loadVoices() {
+    if (native) return loadNativeVoices();
+    return new Promise((resolve) => {
+      if (!webSupported) return resolve([]);
       const got = speechSynthesis.getVoices();
       if (got && got.length) { voices = got; return resolve(voices); }
       let tries = 0;
@@ -301,6 +328,7 @@ const Voice = (function () {
 
   function startHeartbeat() {
     stopHeartbeat();
+    if (native) return;
     // Desktop Chrome silently stops speaking after ~15 s; a pause/resume pair
     // keeps the queue alive.
     heartbeat = setInterval(() => {
@@ -324,6 +352,10 @@ const Voice = (function () {
     }
     const item = queue[index];
     const voice = currentVoice();
+    if (native) return speakNative(item, voice);
+    // Safari fires onend for a cancelled utterance; the token keeps that from
+    // advancing the queue a second time after a jump.
+    const my = ++token;
     const u = new SpeechSynthesisUtterance(adaptTo(forSpeech(item.text), voice));
     // A voice object can go stale when the device reloads its voice list;
     // assigning it then throws, and speaking in the default voice beats
@@ -335,11 +367,12 @@ const Voice = (function () {
     u.rate = settings.rate;
     u.pitch = settings.pitch;
     u.onend = () => {
-      if (state !== "speaking") return;
+      if (my !== token || state !== "speaking") return;
       index++;
       speakCurrent();
     };
     u.onerror = (e) => {
+      if (my !== token) return;
       if (e && (e.error === "interrupted" || e.error === "canceled")) return;
       state = "idle";
       stopHeartbeat();
@@ -347,6 +380,33 @@ const Voice = (function () {
     };
     emit("chunk", { index: index, item: item, total: queue.length });
     speechSynthesis.speak(u);
+  }
+
+  function speakNative(item, voice) {
+    const my = ++token;
+    const options = {
+      text: adaptTo(forSpeech(item.text), voice),
+      lang: voice ? voice.lang : "sr-RS",
+      rate: settings.rate,
+      pitch: settings.pitch,
+    };
+    if (voice && typeof voice.index === "number") options.voice = voice.index;
+    emit("chunk", { index: index, item: item, total: queue.length });
+    native.speak(options).then(() => {
+      if (my !== token || state !== "speaking") return;
+      index++;
+      speakCurrent();
+    }).catch((e) => {
+      if (my !== token) return;
+      state = "idle";
+      emit("error", e);
+    });
+  }
+
+  function cancelEngine() {
+    token++;
+    if (native) native.stop().catch(() => {});
+    else if (webSupported) speechSynthesis.cancel();
   }
 
   function play(items) {
@@ -365,7 +425,7 @@ const Voice = (function () {
   function stop() {
     state = "idle";
     stopHeartbeat();
-    if (supported) speechSynthesis.cancel();
+    cancelEngine();
     queue = [];
     index = 0;
     emit("stop");
@@ -373,16 +433,19 @@ const Voice = (function () {
 
   function pause() {
     if (!supported || state !== "speaking") return;
-    speechSynthesis.pause();
+    // Android's engine can't pause; stop now and replay this sentence on resume.
+    if (native) cancelEngine();
+    else speechSynthesis.pause();
     state = "paused";
     emit("pause");
   }
 
   function resume() {
     if (!supported || state !== "paused") return;
-    speechSynthesis.resume();
     state = "speaking";
     emit("resume");
+    if (native) speakCurrent();
+    else speechSynthesis.resume();
   }
 
   function toggle() {
@@ -394,7 +457,10 @@ const Voice = (function () {
     if (!queue.length) return;
     const target = Math.max(0, Math.min(queue.length - 1, index + delta));
     index = target;
-    speechSynthesis.cancel();
+    const wasPaused = state === "paused";
+    cancelEngine();
+    // A paused web queue stays paused after cancel(); new speech would be silent.
+    if (wasPaused && !native) speechSynthesis.resume();
     if (state === "paused") state = "speaking";
     if (state !== "speaking") { state = "speaking"; startHeartbeat(); }
     speakCurrent();
@@ -412,6 +478,8 @@ const Voice = (function () {
 
   return {
     supported: supported,
+    native: !!native,
+    openInstall: native ? () => native.openInstall() : null,
     load: loadVoices,
     voices: () => sortedVoices(),
     voice: currentVoice,
