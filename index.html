@@ -15,8 +15,14 @@
 <!-- ===================== SCHEDULE ===================== -->
 <div class="tab-panel" id="schedule">
 <div class="app">
-  <h1>Raspored — 3 CNC (G2)</h1>
+  <h1>Raspored — 3 CNC (G1)</h1>
   <div class="subtitle">Sedmični raspored časova, važi od 1.9.2026.</div>
+
+  <button type="button" id="export-schedule-btn" class="add-btn secondary">📅 Izvezi raspored u kalendar</button>
+  <div class="hint" style="margin: 0.4rem 0 1rem;">
+    Uveze po jedan ponavljajući događaj za svaki radni dan, sa podsjetnikom u 10:50 (2 sata i 20 minuta prije prvog časa) koji navodi sve časove tog dana — jednom uvezeno, radi zauvijek bez ove aplikacije.
+  </div>
+
   <div id="schedule-list"></div>
 </div>
 </div>
@@ -126,6 +132,22 @@
 
   <div class="note" data-i18n="gcode.note">
     Ovo je generička/ISO referenca (u većini slučajeva kompatibilna sa Fanuc-om). Tačni brojevi kodova mogu se razlikovati zavisno od upravljačke jedinice (Fanuc, Siemens Sinumerik, Heidenhain) — uvijek provjeri sa priručnikom mašine u školi prije pokretanja programa, posebno kodove za izbor jedinica (G20/G21 ili G70/G71).
+  </div>
+</div>
+</div>
+
+<!-- ===================== C REFERENCE ===================== -->
+<div class="tab-panel" id="cref">
+<div class="app">
+  <h1>C jezik — brzi podsjetnik</h1>
+  <div class="subtitle">Za Računari i programiranje — pretraži po ključnoj riječi ili kategoriji</div>
+
+  <input type="search" id="cref-search" placeholder="Pretraži npr. &quot;printf&quot;, &quot;petlja&quot;, &quot;if&quot;" style="margin-bottom: 1rem;">
+
+  <div class="gcode-list" id="cref-list"></div>
+
+  <div class="note">
+    Ovo pokriva osnove i razgranatu/linijsku strukturu programa iz nastavnog plana. Ne zamjenjuje udžbenik ili nastavnikova objašnjenja — samo brz podsjetnik sintakse.
   </div>
 </div>
 </div>
@@ -367,6 +389,7 @@
   <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span><span data-i18n="nav.calc">Kalkulator</span></button>
   <button data-tab="gcode" type="button"><span class="icon">🔤</span><span data-i18n="nav.gcode">G-kod</span></button>
   <button data-tab="lectures" type="button"><span class="icon">🔊</span><span>Predavanja</span></button>
+  <button data-tab="cref" type="button"><span class="icon">💻</span><span>C</span></button>
   <button data-tab="curriculum" type="button"><span class="icon">📘</span><span data-i18n="nav.curriculum">3. razred</span></button>
   <button data-tab="resources" type="button"><span class="icon">📚</span><span data-i18n="nav.resources">Resursi</span></button>
   <button data-tab="journal" type="button"><span class="icon">📓</span><span>Dnevnik</span></button>

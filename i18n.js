@@ -37,7 +37,7 @@ const I18N = {
     "gcode.searchPlaceholder": "Pretraži npr. \"G02\", \"luk\", \"vreteno\"",
     "gcode.gcodesHeading": "G-kodovi",
     "gcode.mcodesHeading": "M-kodovi",
-    "gcode.note": "Ovo je generička/ISO referenca (u većini slučajeva kompatibilna sa Fanuc-om). Tačni brojevi kodova mogu se razlikovati zavisno od upravljačke jedinice (Fanuc, Siemens Sinumerik, Heidenhain) — uvijek provjeri sa priručnikom mašine u školi prije pokretanja programa, posebno kodove za izbor jedinica (G20/G21 ili G70/G71).",
+    "gcode.note": "Škola koristi EMCO WinNC za Sinumerik 810D/840D (Siemens-stil), pa su G70/G71 i imenovani ciklusi (CYCLE81...) ono što ćeš zaista kucati. Fanuc-varijante (G20/G21, G81-G84) su ovdje samo radi poređenja — nemoj ih miješati u isti program.",
     "gcode.noResults": "Nema rezultata.",
 
     "curriculum.title": "3. razred — Tehničar CNC tehnologije",
@@ -89,7 +89,7 @@ const I18N = {
     "gcode.searchPlaceholder": "Search e.g. \"G02\", \"arc\", \"spindle\"",
     "gcode.gcodesHeading": "G-codes",
     "gcode.mcodesHeading": "M-codes",
-    "gcode.note": "This is a generic/ISO-style reference (Fanuc-compatible in most cases). Exact code numbers can vary by controller (Fanuc, Siemens Sinumerik, Heidenhain) — always verify against your school machine's control manual before running a program, especially unit-selection codes (G20/G21 vs G70/G71).",
+    "gcode.note": "The school uses EMCO WinNC for Sinumerik 810D/840D (Siemens-style), so G70/G71 and named cycles (CYCLE81...) are what you'll actually type. The Fanuc variants (G20/G21, G81-G84) are here for comparison only — don't mix them into the same program.",
     "gcode.noResults": "No matches.",
 
     "curriculum.title": "3rd Year — Tehničar CNC tehnologije",
