@@ -366,13 +366,29 @@
     if (validLectures(cached)) window.LECTURES = cached;
   } catch (e) {}
 
+  // Straight from GitHub when the worker is unreachable or not yet deployed;
+  // only the JSON inside concat(...) is parsed, nothing is executed.
+  const GITHUB_SRC =
+    "https://raw.githubusercontent.com/tgGeorge170/School-Agent/claude/notifications-problem-analysis-3nc0cb/lectures-data.js";
+  function fromGithub() {
+    return fetch(GITHUB_SRC, { cache: "no-store" })
+      .then((r) => (r.ok ? r.text() : ""))
+      .then((text) => {
+        const start = text.indexOf(".concat(");
+        const end = text.lastIndexOf(");");
+        return start < 0 || end < start ? null : JSON.parse(text.slice(start + 8, end));
+      });
+  }
+
   let lastFetch = 0;
   function refreshLectures() {
     const base = self.PUSH_CONFIG && self.PUSH_CONFIG.workerUrl;
-    if (!base || Date.now() - lastFetch < 10 * 60e3) return;
+    if (Date.now() - lastFetch < 10 * 60e3) return;
     lastFetch = Date.now();
-    fetch(base + "/lectures.json", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
+    (base ? fetch(base + "/lectures.json", { cache: "no-store" }) : Promise.reject())
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => (validLectures(data) ? data : Promise.reject()))
+      .catch(fromGithub)
       .then((data) => {
         if (!validLectures(data)) return;
         const text = JSON.stringify(data);
