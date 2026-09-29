@@ -1,4 +1,4 @@
-const CACHE_NAME = "cnc-companion-v8";
+const CACHE_NAME = "cnc-companion-v9";
 const ASSETS = [
   "./index.html",
   "./styles.css",
