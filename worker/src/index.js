@@ -1,6 +1,7 @@
 import { sendWebPush } from "./webpush.js";
 import { DEFAULT_SETTINGS, dueReminders, remindersForDate, todayPreview } from "./reminders.js";
 import { addDays, localParts } from "./time.js";
+import { serveLectures } from "./lectures.js";
 
 // KV layout: sub:<hash> = device record, state:<hash> = sent log + last push
 // result, bare <hash> = legacy subscription from the first version.
@@ -261,6 +262,7 @@ export default {
     if (url.pathname === "/" || url.pathname === "/health") return new Response("OK", { headers: CORS_HEADERS });
     if (url.pathname === "/api/vapid-public-key") return json({ key: env.VAPID_PUBLIC_KEY });
     if (url.pathname === "/cnc-pomocnik.apk") return serveApk();
+    if (url.pathname === "/lectures.json") return serveLectures(CORS_HEADERS);
     if (request.method !== "POST") return json({ error: "not found" }, 404);
 
     try {

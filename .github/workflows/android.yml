@@ -3,7 +3,7 @@ name: Android app
 on:
   push:
     branches: [claude/notifications-problem-analysis-3nc0cb]
-    paths-ignore: ["**.md", "worker/wrangler.toml"]
+    paths-ignore: ["**.md", "worker/wrangler.toml", "lectures-data.js"]
   workflow_dispatch:
 
 concurrency: android-${{ github.ref }}

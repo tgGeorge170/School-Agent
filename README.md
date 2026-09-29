@@ -69,7 +69,9 @@ those require a real HTTP(S) origin.
   ranking, speech normalisation, sentence splitting, playback queue.
 - `lectures.js`, `lectures-data.js` — the Predavanja tab and its lesson
   content. `lectures-data.js` documents the shape each lesson takes; it is
-  filled in from photos of the student's own notebook.
+  filled in from photos of the student's own notebook. The app also
+  downloads it from this branch through the worker's `/lectures.json`, so new
+  lessons show up without installing a new APK.
 
 ## Push notifications (`worker/`)
 

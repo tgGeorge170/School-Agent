@@ -355,6 +355,37 @@
     els.installBtn.addEventListener("click", () => Voice.openInstall().catch(() => {}));
     document.addEventListener("visibilitychange", () => { if (!document.hidden) reloadVoices(); });
   }
+  // ---------- online lessons ----------
+  // New lessons are downloaded through the worker, so no APK update is needed;
+  // the last download is kept for offline use.
+  const STORE = "lectures-online-v1";
+  const validLectures = (d) => Array.isArray(d) && d.length > 0 &&
+    d.every((s) => s && typeof s.subject === "string" && Array.isArray(s.lessons));
+  try {
+    const cached = JSON.parse(localStorage.getItem(STORE));
+    if (validLectures(cached)) window.LECTURES = cached;
+  } catch (e) {}
+
+  let lastFetch = 0;
+  function refreshLectures() {
+    const base = self.PUSH_CONFIG && self.PUSH_CONFIG.workerUrl;
+    if (!base || Date.now() - lastFetch < 10 * 60e3) return;
+    lastFetch = Date.now();
+    fetch(base + "/lectures.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!validLectures(data)) return;
+        const text = JSON.stringify(data);
+        if (text === JSON.stringify(window.LECTURES)) return;
+        try { localStorage.setItem(STORE, text); } catch (e) {}
+        window.LECTURES = data;
+        if (els.reader.hidden) renderBrowse();
+      })
+      .catch(() => {});
+  }
+  document.addEventListener("DOMContentLoaded", refreshLectures);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshLectures(); });
+
   syncSettingsUI();
   renderBrowse();
 
