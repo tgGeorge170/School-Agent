@@ -464,6 +464,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .lesson-head h2 { margin: 0.2rem 0 0; font-size: 1.15rem; }
 .lesson-body { font-size: 0.93rem; line-height: 1.65; }
 .lesson-body p { margin: 0.7rem 0; }
+.lesson-fig { margin: 0.8rem 0; }
+.lesson-fig img { display: block; width: 100%; height: auto; background: #fff; border-radius: 10px; border: 1px solid var(--border, #d0d4dc); }
+.lesson-fig figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; text-align: center; }
 .lesson-summary { color: var(--muted); font-style: italic; }
 .lesson-h { margin: 1.2rem 0 0.2rem; font-size: 1rem; color: var(--accent); }
 .sent { cursor: pointer; border-radius: 3px; }

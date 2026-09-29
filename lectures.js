@@ -196,6 +196,24 @@
     return (window.LECTURES || []).slice().sort((a, b) => (a.order || 99) - (b.order || 99));
   }
 
+  // A section picture is inline SVG markup or an image URL. It is shown as an
+  // <img>, so SVG from the downloaded lessons can never run scripts.
+  function figure(img, cap) {
+    const fig = document.createElement("figure");
+    fig.className = "lesson-fig";
+    const im = document.createElement("img");
+    im.src = img.trim().startsWith("<svg") ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(img) : img;
+    im.alt = cap || "";
+    im.loading = "lazy";
+    fig.appendChild(im);
+    if (cap) {
+      const fc = document.createElement("figcaption");
+      fc.textContent = cap;
+      fig.appendChild(fc);
+    }
+    return fig;
+  }
+
   function renderBrowse() {
     const list = subjects();
     els.browse.innerHTML = "";
@@ -305,6 +323,7 @@
         body.appendChild(h);
         collected.push({ text: sec.h + ".", el: h });
       }
+      if (sec.img) body.appendChild(figure(sec.img, sec.cap));
       (sec.p || []).forEach((para) => {
         const p = document.createElement("p");
         p.appendChild(sentenceNodes(para, collected));
