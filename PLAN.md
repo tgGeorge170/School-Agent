@@ -1,0 +1,152 @@
+# Plan: professor login, every curriculum, store apps
+
+Goal: professors log in and publish lessons themselves, for any smjer and
+razred, and students get the app from Google Play, the App Store and the
+Microsoft Store (Windows).
+
+## Where we are today
+
+| Piece | Where | Notes |
+|---|---|---|
+| Web app (PWA) | `main`, GitHub Pages | Vanilla JS, no build step, Serbian/EN |
+| Android APK | branch `claude/notifications-problem-analysis-3nc0cb` (`android-app/`) | Capacitor 8, CI builds the APK, emulator test |
+| Backend | `worker/` (Cloudflare Worker + KV) | Push reminders, serves `/lectures.json` and the APK |
+| Lessons | `lectures-data.js` in git | Only we can add lessons (photos → `nova-lekcija` skill → push) |
+
+The problem: lessons live in a git file. To let professors add lessons, they
+have to live in a **database** behind a **login**.
+
+## Target architecture
+
+```
+ Student app (Android / iOS / Windows / web)     Professor portal (same app, "Za profesore")
+            │ reads published lessons                      │ login, write lessons, upload images
+            └──────────────────┬───────────────────────────┘
+                               ▼
+            Backend: Auth + Database + File storage
+            (recommended: Supabase, see Decision 1)
+                               │
+            Cloudflare Worker (keep): push reminders,
+            "new lesson published" notifications
+```
+
+One codebase (the current web app) ships everywhere:
+- **Android + iOS**: Capacitor (already set up for Android).
+- **Windows**: the same PWA packaged as MSIX via PWABuilder → Microsoft Store.
+- **Web**: GitHub Pages (or our own domain).
+
+## Decision 1: backend (needed before any login code)
+
+| Option | Login | Cost | Effort | Downsides |
+|---|---|---|---|---|
+| **Supabase** (recommended) | Built in: email + password, invites, password reset, Google sign-in | Free tier | Low | Free projects pause after 7 days with no traffic (e.g. summer break); one click to resume |
+| Cloudflare D1 + R2 (extend our Worker) | We write it ourselves | Free tier | High | Writing our own auth is easy to get wrong |
+| Firebase | Built in | Free tier | Low | NoSQL, so curriculum queries are clumsier; Google lock-in |
+
+Supabase gives us Postgres plus **row-level security**, so the database
+itself enforces rules like "a professor can only edit lessons for their own
+subjects", even if the app has a bug.
+
+## Data model
+
+```
+schools        id, name, city
+programs       id, school_id, name            e.g. "Tehničar CNC tehnologije"
+grades         id, program_id, year (1–4)
+subjects       id, grade_id, name, icon, order
+modules        id, subject_id, name, order    e.g. "1. Programiranje NUMA"
+lessons        id, module_id, title, summary, sections (JSON), key (JSON),
+               status (draft | published), author_id, updated_at
+profiles       user_id, full_name, role (admin | profesor | ucenik), school_id
+assignments    profesor_id, subject_id        which subjects a professor may edit
+```
+
+`sections` and `key` keep **today's lesson format**, so the Predavanja player
+and read-aloud keep working unchanged. Images go to file storage instead of
+inline SVG strings (SVG still allowed).
+
+Permissions:
+- Anyone (even without logging in): read **published** lessons.
+- Profesor: create, edit and publish lessons only for their assigned subjects.
+- Admin (us / school): add schools, programs and subjects, invite professors,
+  assign subjects.
+
+## Phase 0: preparation (before coding)
+
+1. **Merge the branches.** `main` and the APK branch have split. Put everything
+   (PWA, `android-app/`, `worker/`) on `main` so there is one app.
+2. Make the decisions at the bottom of this file.
+3. Open the store developer accounts (see "Stores"). The Google Play testing
+   period takes at least 14 days, so it should start early.
+
+## Phase 1: login page (first)
+
+Screens (Serbian, matching the app's style):
+1. **Prijava**: email + lozinka, "Zaboravili ste lozinku?"
+2. **Postavi lozinku**: the professor opens the invite email link and picks a password.
+3. **Reset lozinke**: from the email link.
+4. **Moji predmeti**: after login, the subjects assigned to this professor.
+5. **Odjava** (log out), session remembered on the device.
+
+How professors get in:
+- **Invite-only.** No public sign-up, so random people can't post lessons.
+  An admin enters the professor's email and the professor gets an invite email.
+- The entry point is a "Za profesore" button in the app's settings / footer,
+  plus a direct web link (`…/#/profesor`) for using it on a computer.
+- On Android/iOS, invite and reset links open the app (deep links).
+
+Done when: a professor gets an invite, sets a password, logs in on the web
+and on the Android app, sees "Moji predmeti", and the database refuses
+edits to subjects they aren't assigned to (tested).
+
+## Phase 2: lesson editor
+
+- List of the subject's modules and lessons, with draft/published badges.
+- Editor: title, module, summary, sections (heading, paragraphs, image
+  upload + caption), "key" points for the test.
+- **Preview** button that shows the lesson exactly as students see it and
+  reads it aloud with the same voice engine.
+- Publish / unpublish. Students only see published lessons.
+- Move the existing lessons from `lectures-data.js` into the database
+  (one-off import script). The app keeps a bundled copy for offline first launch.
+
+## Phase 3: every curriculum
+
+- First-launch picker for students: Škola → Smjer → Razred (changeable later).
+- The Raspored, 3rd Year curriculum and Dnevnik subject lists come from the
+  database instead of being hard-coded for CNC 3rd year.
+- Admin panel: add programs/subjects (seed from the official RPZ RS
+  curricula), invite professors, assign subjects.
+- Offline: lessons the student opened are cached on the device.
+
+## Phase 4: stores
+
+| Store | Cost | What's needed | Watch out for |
+|---|---|---|---|
+| Google Play | $25 one-time | AAB build (we have APK), privacy policy URL, Data safety form, content rating | New **personal** accounts must run a closed test with **12 testers for 14 days** before going public. An organization account (the school) skips this but needs a D-U-N-S number |
+| Apple App Store | $99/year | Capacitor iOS project; build on a Mac **or** GitHub Actions macOS runners / Codemagic | Apple rejects "just a website in a wrapper", so we point to offline lessons, read-aloud, notifications. Review takes 1–3 days |
+| Microsoft Store | Free for individuals | PWABuilder → MSIX package | Easiest of the three |
+
+All stores need the developer to be **18+**, plus a privacy policy page
+(we collect professors' emails; students stay anonymous unless we add
+student accounts).
+
+## Phase 5: extras (later)
+
+- **AI draft from photos**: a professor uploads notebook/board photos and
+  gets a lesson draft to correct (what the `nova-lekcija` skill does now,
+  built into the app). Uses the Claude API, so it costs per use.
+- Push notification "Nova lekcija iz Termodinamike" when a lesson is published.
+- Short quizzes from the lesson's key points.
+- Statistics for professors (how many students opened a lesson).
+
+## Open decisions
+
+1. Backend: Supabase (recommended), Cloudflare-only, or Firebase?
+2. Who owns the store accounts? Needs 18+ and payment. Options: you, a
+   parent, or the school/professor (an organization account also skips
+   Google's 14-day test).
+3. Scope: every smjer at Tehnička škola Gradiška, or any school in RS?
+4. Do students need accounts, or do they stay anonymous and just pick
+   škola/smjer/razred?
+5. OK to merge the APK branch into `main` and make `main` the single source?
