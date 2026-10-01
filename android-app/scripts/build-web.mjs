@@ -13,6 +13,7 @@ mkdirSync(www, { recursive: true });
 const files = [
   "index.html", "styles.css", "manifest.json", "i18n.js", "content-data.js", "journal.js",
   "voice.js", "lectures-data.js", "lectures.js", "app.js", "push-config.js", "push.js",
+  "profesor.html", "profesor.js",
 ];
 for (const f of files) cpSync(join(root, f), join(www, f));
 cpSync(join(root, "icons"), join(www, "icons"), { recursive: true });

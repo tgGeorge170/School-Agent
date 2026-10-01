@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Za profesore — CNC Školski Pomoćnik</title>
+<meta name="theme-color" content="#1a5fb4">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="prof-page">
+<div class="app">
+  <a class="prof-back" href="index.html">← Nazad u aplikaciju</a>
+  <h1>👩‍🏫 Za profesore</h1>
+  <div class="subtitle" id="prof-subtitle">Prijava za profesore</div>
+
+  <div class="panel" id="view-loading">Učitavam…</div>
+
+  <div class="panel" id="view-error" hidden>
+    <div id="error-text"></div>
+    <button type="button" class="add-btn" id="error-retry">Pokušaj ponovo</button>
+  </div>
+
+  <form class="panel prof-form" id="view-setup" hidden novalidate>
+    <h2>Prvo pokretanje</h2>
+    <div class="hint prof-lead">Napravite prvi administratorski nalog. Kod za postavljanje dobijate od onoga ko je postavio server.</div>
+    <label for="setup-code">Kod za postavljanje</label>
+    <input type="text" id="setup-code" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+    <label for="setup-name">Ime i prezime</label>
+    <input type="text" id="setup-name" autocomplete="name" required>
+    <label for="setup-email">Email</label>
+    <input type="email" id="setup-email" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+    <label for="setup-pass">Lozinka</label>
+    <input type="password" id="setup-pass" autocomplete="new-password" required>
+    <label for="setup-pass2">Ponovi lozinku</label>
+    <input type="password" id="setup-pass2" autocomplete="new-password" required>
+    <div class="hint">Najmanje 8 znakova.</div>
+    <div class="prof-msg" id="setup-msg" role="alert" hidden></div>
+    <button type="submit" class="add-btn">Napravi nalog</button>
+  </form>
+
+  <form class="panel prof-form" id="view-login" hidden novalidate>
+    <h2>Prijava</h2>
+    <label for="login-email">Email</label>
+    <input type="email" id="login-email" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+    <label for="login-pass">Lozinka</label>
+    <input type="password" id="login-pass" autocomplete="current-password" required>
+    <div class="prof-msg" id="login-msg" role="alert" hidden></div>
+    <button type="submit" class="add-btn">Prijavi se</button>
+    <div class="hint prof-forgot">Zaboravili ste lozinku? Javite se administratoru da vam pošalje link za novu lozinku.</div>
+  </form>
+
+  <form class="panel prof-form" id="view-link" hidden novalidate>
+    <h2 id="link-title">Postavi lozinku</h2>
+    <div class="hint prof-lead" id="link-lead"></div>
+    <div id="link-fields">
+      <label for="link-pass">Lozinka</label>
+      <input type="password" id="link-pass" autocomplete="new-password" required>
+      <label for="link-pass2">Ponovi lozinku</label>
+      <input type="password" id="link-pass2" autocomplete="new-password" required>
+      <div class="hint">Najmanje 8 znakova.</div>
+      <div class="prof-msg" id="link-msg" role="alert" hidden></div>
+      <button type="submit" class="add-btn" id="link-submit">Sačuvaj lozinku</button>
+    </div>
+    <div id="link-invalid" hidden>
+      <div class="note">Ovaj link nije ispravan ili je istekao. Zamolite administratora da vam pošalje novi.</div>
+      <button type="button" class="add-btn secondary prof-gap" id="link-to-login">Idi na prijavu</button>
+    </div>
+  </form>
+
+  <div id="view-home" hidden>
+    <div class="panel">
+      <h2 id="home-greeting">Dobrodošli</h2>
+      <div class="hint" id="home-email"></div>
+      <div class="section-heading prof-gap">Moji predmeti</div>
+      <ul class="prof-subjects" id="home-subjects"></ul>
+      <div class="note" id="home-no-subjects" hidden>Još vam nije dodijeljen nijedan predmet. Administrator će vam ih dodijeliti.</div>
+      <div class="hint prof-gap">Uređivač lekcija stiže uskoro.</div>
+    </div>
+
+    <div class="panel">
+      <button type="button" class="add-btn secondary" id="pw-toggle">🔑 Promijeni lozinku</button>
+      <form class="prof-form" id="pw-form" hidden novalidate>
+        <label for="pw-current">Trenutna lozinka</label>
+        <input type="password" id="pw-current" autocomplete="current-password" required>
+        <label for="pw-new">Nova lozinka</label>
+        <input type="password" id="pw-new" autocomplete="new-password" required>
+        <label for="pw-new2">Ponovi novu lozinku</label>
+        <input type="password" id="pw-new2" autocomplete="new-password" required>
+        <div class="hint">Najmanje 8 znakova.</div>
+        <div class="prof-msg" id="pw-msg" role="alert" hidden></div>
+        <button type="submit" class="add-btn">Sačuvaj novu lozinku</button>
+      </form>
+      <button type="button" class="add-btn secondary prof-gap" id="logout">Odjavi se</button>
+    </div>
+
+    <div id="admin" hidden>
+      <h2 class="prof-section-title">Administracija</h2>
+
+      <form class="panel prof-form" id="invite-form" novalidate>
+        <h2>Pozovi profesora</h2>
+        <label for="inv-name">Ime i prezime</label>
+        <input type="text" id="inv-name" autocomplete="off" required>
+        <label for="inv-email">Email</label>
+        <input type="email" id="inv-email" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+        <label for="inv-role">Uloga</label>
+        <select id="inv-role">
+          <option value="profesor">Profesor</option>
+          <option value="admin">Administrator</option>
+        </select>
+        <div class="prof-msg" id="inv-msg" role="alert" hidden></div>
+        <button type="submit" class="add-btn">Napravi link za pozivnicu</button>
+        <div id="inv-result" hidden></div>
+      </form>
+
+      <div class="panel">
+        <h2>Korisnici</h2>
+        <div class="prof-msg" id="users-msg" role="alert" hidden></div>
+        <div id="users-list" class="prof-users"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="push-config.js"></script>
+<script src="profesor.js"></script>
+</body>
+</html>

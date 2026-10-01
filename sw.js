@@ -1,6 +1,6 @@
 importScripts("push-config.js");
 
-const CACHE_NAME = "cnc-companion-v15";
+const CACHE_NAME = "cnc-companion-v16";
 const ASSETS = [
   "./index.html",
   "./styles.css",
@@ -13,6 +13,8 @@ const ASSETS = [
   "./app.js",
   "./push-config.js",
   "./push.js",
+  "./profesor.html",
+  "./profesor.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
