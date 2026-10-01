@@ -23,11 +23,10 @@ have to live in a **database** behind a **login**.
             │ reads published lessons                      │ login, write lessons, upload images
             └──────────────────┬───────────────────────────┘
                                ▼
-            Backend: Auth + Database + File storage
-            (recommended: Supabase, see Decision 1)
-                               │
-            Cloudflare Worker (keep): push reminders,
-            "new lesson published" notifications
+            Cloudflare Worker (our existing one, extended)
+            ├─ D1: users, sessions, curriculum, lessons
+            ├─ R2: lesson images
+            └─ push reminders, "new lesson published" notifications
 ```
 
 One codebase (the current web app) ships everywhere:
@@ -35,49 +34,67 @@ One codebase (the current web app) ships everywhere:
 - **Windows**: the same PWA packaged as MSIX via PWABuilder → Microsoft Store.
 - **Web**: GitHub Pages (or our own domain).
 
-## Decision 1: backend (needed before any login code)
+## Decisions made
 
-| Option | Login | Cost | Effort | Downsides |
-|---|---|---|---|---|
-| **Supabase** (recommended) | Built in: email + password, invites, password reset, Google sign-in | Free tier | Low | Free projects pause after 7 days with no traffic (e.g. summer break); one click to resume |
-| Cloudflare D1 + R2 (extend our Worker) | We write it ourselves | Free tier | High | Writing our own auth is easy to get wrong |
-| Firebase | Built in | Free tier | Low | NoSQL, so curriculum queries are clumsier; Google lock-in |
+| Question | Answer |
+|---|---|
+| Backend | **Cloudflare only**: extend our Worker with D1 (database) and R2 (images) |
+| Store accounts | **School / professor** (organization account) |
+| Scope | **Our school, all smjerovi** |
+| Students | **Anonymous**: pick smjer + razred, no accounts |
 
-Supabase gives us Postgres plus **row-level security**, so the database
-itself enforces rules like "a professor can only edit lessons for their own
-subjects", even if the app has a bug.
+## Build on it or start over?
+
+**Build on it, but restructure.** What exists works and is tested; what has to
+change is the data being hard-coded for CNC 3rd year.
+
+| Part | Verdict | Why |
+|---|---|---|
+| `voice.js` (Serbian read-aloud) | Keep as is | Hardest part, works on phone, PC and in the APK |
+| `lectures.js` (player) | Keep, change the data source | Reads from the API instead of `lectures-data.js` |
+| Calculator, G-code, C reference | Keep | Become "tools" shown only for smjerovi that need them |
+| `content-data.js`, journal subject list, schedule | **Rewrite** | Hard-coded for CNC 3rd year; must come from the database per smjer/razred |
+| `index.html` (one big page, all tabs) | **Restructure** | Split into modules with a small build step (esbuild, already used by `android-app/`) so login, editor and admin don't pile into one file |
+| `android-app/` (Capacitor) | Keep | Add iOS to the same project |
+| `worker/` | Keep, extend | Add D1 + auth + lesson API next to push reminders |
+| Two diverged branches | **Merge into `main`** | One app, one source |
+
+Starting over would throw away the read-aloud work, the Android build with
+its emulator test, and the push reminders, all of which would need to be
+rebuilt the same way.
 
 ## Data model
 
 ```
-schools        id, name, city
-programs       id, school_id, name            e.g. "Tehničar CNC tehnologije"
+programs       id, name                                  e.g. "Tehničar CNC tehnologije"
 grades         id, program_id, year (1–4)
 subjects       id, grade_id, name, icon, order
 modules        id, subject_id, name, order    e.g. "1. Programiranje NUMA"
 lessons        id, module_id, title, summary, sections (JSON), key (JSON),
                status (draft | published), author_id, updated_at
-profiles       user_id, full_name, role (admin | profesor | ucenik), school_id
-assignments    profesor_id, subject_id        which subjects a professor may edit
+users          id, email, full_name, role (admin | profesor), password_hash, salt
+sessions       token_hash, user_id, expires_at
+invites        token_hash, email, role, expires_at, used_at
+assignments    user_id, subject_id            which subjects a professor may edit
 ```
 
 `sections` and `key` keep **today's lesson format**, so the Predavanja player
 and read-aloud keep working unchanged. Images go to file storage instead of
 inline SVG strings (SVG still allowed).
 
-Permissions:
+Permissions (checked in the Worker on every write request):
 - Anyone (even without logging in): read **published** lessons.
 - Profesor: create, edit and publish lessons only for their assigned subjects.
-- Admin (us / school): add schools, programs and subjects, invite professors,
+- Admin (us / school): add programs and subjects, invite professors,
   assign subjects.
 
 ## Phase 0: preparation (before coding)
 
 1. **Merge the branches.** `main` and the APK branch have split. Put everything
    (PWA, `android-app/`, `worker/`) on `main` so there is one app.
-2. Make the decisions at the bottom of this file.
-3. Open the store developer accounts (see "Stores"). The Google Play testing
-   period takes at least 14 days, so it should start early.
+2. Make the remaining decisions at the bottom of this file.
+3. Ask the school to start the **D-U-N-S number** request now: Google and
+   Apple organization accounts need it, and it can take weeks.
 
 ## Phase 1: login page (first)
 
@@ -94,6 +111,17 @@ How professors get in:
 - The entry point is a "Za profesore" button in the app's settings / footer,
   plus a direct web link (`…/#/profesor`) for using it on a computer.
 - On Android/iOS, invite and reset links open the app (deep links).
+
+How it works (Cloudflare, no outside auth service):
+- Passwords hashed with PBKDF2-SHA256 (Web Crypto, built into Workers) with a
+  random salt per user; never stored or logged in plain text.
+- Login returns a random session token; only its hash is stored in D1.
+  Web uses an HttpOnly cookie, the apps send it as a Bearer header.
+  Sessions expire after 30 days, "Odjava" deletes the session.
+- Invite and reset links: one-time random tokens, valid 48 h / 1 h.
+- Rate limit on login (e.g. 5 wrong tries → wait 15 min) against password guessing.
+- Endpoints: `POST /api/auth/login`, `/logout`, `/accept-invite`,
+  `/request-reset`, `/reset`, `GET /api/me`.
 
 Done when: a professor gets an invite, sets a password, logs in on the web
 and on the Android app, sees "Moji predmeti", and the database refuses
@@ -123,13 +151,13 @@ edits to subjects they aren't assigned to (tested).
 
 | Store | Cost | What's needed | Watch out for |
 |---|---|---|---|
-| Google Play | $25 one-time | AAB build (we have APK), privacy policy URL, Data safety form, content rating | New **personal** accounts must run a closed test with **12 testers for 14 days** before going public. An organization account (the school) skips this but needs a D-U-N-S number |
-| Apple App Store | $99/year | Capacitor iOS project; build on a Mac **or** GitHub Actions macOS runners / Codemagic | Apple rejects "just a website in a wrapper", so we point to offline lessons, read-aloud, notifications. Review takes 1–3 days |
+| Google Play | $25 one-time | Organization account (school) with D-U-N-S number, AAB build (we have APK), privacy policy URL, Data safety form, content rating | Organization accounts skip the 14-day closed test that personal accounts need |
+| Apple App Store | $99/year (schools may qualify for a fee waiver) | Organization account with D-U-N-S; Capacitor iOS project; build on a Mac **or** GitHub Actions macOS runners / Codemagic | Apple rejects "just a website in a wrapper", so we point to offline lessons, read-aloud, notifications. Review takes 1–3 days |
 | Microsoft Store | Free for individuals | PWABuilder → MSIX package | Easiest of the three |
 
-All stores need the developer to be **18+**, plus a privacy policy page
-(we collect professors' emails; students stay anonymous unless we add
-student accounts).
+The school owns the accounts; we get added as developers to upload builds.
+Every store needs a privacy policy page (we store professors' emails;
+students are anonymous).
 
 ## Phase 5: extras (later)
 
@@ -142,11 +170,8 @@ student accounts).
 
 ## Open decisions
 
-1. Backend: Supabase (recommended), Cloudflare-only, or Firebase?
-2. Who owns the store accounts? Needs 18+ and payment. Options: you, a
-   parent, or the school/professor (an organization account also skips
-   Google's 14-day test).
-3. Scope: every smjer at Tehnička škola Gradiška, or any school in RS?
-4. Do students need accounts, or do they stay anonymous and just pick
-   škola/smjer/razred?
-5. OK to merge the APK branch into `main` and make `main` the single source?
+1. Invite and password-reset emails: send them through an email service
+   (e.g. Resend, free up to 3000/month, needs a domain), or have the admin
+   copy the invite link and send it to the professor themselves (no email
+   service, simplest to start)?
+2. OK to merge the APK branch into `main` and make `main` the single source?
