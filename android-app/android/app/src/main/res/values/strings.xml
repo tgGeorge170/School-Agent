@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CNC Pomoćnik</string>
+    <string name="title_activity_main">CNC Pomoćnik</string>
+    <string name="package_name">ba.tggeorge.cncpomocnik</string>
+    <string name="custom_url_scheme">ba.tggeorge.cncpomocnik</string>
+</resources>

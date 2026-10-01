@@ -18,9 +18,45 @@
   <h1>Raspored — 3 CNC (G1)</h1>
   <div class="subtitle">Sedmični raspored časova, važi od 1.9.2026.</div>
 
-  <button type="button" id="export-schedule-btn" class="add-btn secondary">📅 Izvezi raspored u kalendar</button>
-  <div class="hint" style="margin: 0.4rem 0 1rem;">
-    Uveze po jedan ponavljajući događaj za svaki radni dan, sa podsjetnikom u 10:50 (2 sata i 20 minuta prije prvog časa) koji navodi sve časove tog dana — jednom uvezeno, radi zauvijek bez ove aplikacije.
+  <div class="panel" id="push-panel">
+    <h2>🔔 Obavještenja</h2>
+    <div id="push-state" class="push-state">Provjeravam…</div>
+    <div class="note push-warn" id="push-brave" hidden>
+      <b>Brave ne prima obavještenja u pozadini.</b> Na Androidu Brave ne budi aplikaciju kad stigne obavještenje, pa ih vidiš tek kad je otvoriš.
+      Da stižu na vrijeme: otvori <b>school-agent.pages.dev</b> u <b>Chrome-u</b> → ⋮ → <b>Dodaj na početni ekran / Instaliraj aplikaciju</b>, pa tamo uključi obavještenja. (Dnevnik prenesi preko „Sačuvaj backup” / „Vrati backup”.)
+    </div>
+    <div class="note push-warn" id="push-denied" hidden>
+      Obavještenja su blokirana za ovu aplikaciju. Dozvoli ih: dugo drži ikonu aplikacije → ⓘ Informacije → Obavještenja → uključi, pa se vrati ovdje.
+    </div>
+
+    <a class="add-btn secondary push-apk" id="push-apk" href="https://school-agent-push.djordjerad009.workers.dev/cnc-pomocnik.apk">📱 Preuzmi Android aplikaciju (podsjetnici uvijek na vrijeme)</a>
+
+    <button type="button" id="push-toggle" class="add-btn">🔔 Uključi obavještenja</button>
+
+    <div id="push-settings" hidden>
+      <label class="push-check"><input type="checkbox" id="push-daily"> Dnevni raspored (radnim danima)</label>
+      <label class="push-check"><input type="checkbox" id="push-tests"> Testovi (2 dana i dan prije, i ujutro na dan testa)</label>
+      <label class="push-check"><input type="checkbox" id="push-tasks"> Zadaci (dan prije roka i na dan roka)</label>
+      <div class="row">
+        <div>
+          <label for="push-daily-time">Jutarnje obavještenje</label>
+          <input type="time" id="push-daily-time" step="300">
+        </div>
+        <div>
+          <label for="push-evening-time">Večernji podsjetnik</label>
+          <input type="time" id="push-evening-time" step="300">
+        </div>
+      </div>
+      <button type="button" id="push-test" class="add-btn secondary" style="margin-top:0.8rem;">📨 Pošalji probno obavještenje</button>
+      <div class="hint" id="push-test-result"></div>
+      <div id="push-next"></div>
+      <div class="hint" id="push-hint-swipe" style="margin-top:0.6rem;">
+        Ne sklanjaj aplikaciju prevlačenjem iz nedavnih aplikacija i ne koristi „Zatvori sve” — Samsung tada ugasi i Chrome, pa obavještenja čekaju dok je ponovo ne otvoriš. Samo pritisni Home. U nedavnim aplikacijama možeš dodirnuti ikonu aplikacije → <b>Ostavi otvoreno</b>, da je „Zatvori sve” ne gasi.
+      </div>
+      <div class="hint" id="push-hint-battery" style="margin-top:0.6rem;">
+        Samsung: Podešavanja → Aplikacije → Chrome → Baterija → <b>Neograničeno</b>, i skloni Chrome sa liste „Aplikacije u stanju mirovanja”, inače telefon može zadržati obavještenja.
+      </div>
+    </div>
   </div>
 
   <div id="schedule-list"></div>
@@ -224,6 +260,7 @@
       <details class="help-box">
         <summary>Nemam dobar glas — šta da radim?</summary>
         <div class="help-body">
+          <button type="button" id="voice-install-btn" class="add-btn secondary" hidden>📥 Instaliraj srpski glas na telefon</button>
           <p><strong>Ne mora biti baš srpski glas.</strong> Hrvatski i bosanski čitaju našu latinicu potpuno isto — ista slova, isti izgovor, a hrvatski je uz to ijekavski kao i mi. Aplikacija ih sama bira odmah poslije srpskog. Zato je najlakše instalirati hrvatski glas, koji <em>postoji</em> i na Windows-u i na Mac-u.</p>
 
           <p><strong>Windows (bilo koji pregledač):</strong> Podešavanja → Vrijeme i jezik → Jezik i region → Dodaj jezik → <em>Hrvatski</em> → čekiraj „Govor / Text-to-speech” i instaliraj. Zatvori i ponovo otvori pregledač — pojaviće se glas <em>Microsoft Matej</em>. Windows nema nijedan srpski glas, pa je ovo najbolje što se dobija bez interneta.</p>
@@ -318,7 +355,7 @@
 
     <button type="button" id="export-tests-btn" class="add-btn secondary">📅 Izvezi sve u kalendar</button>
     <div class="hint" style="margin: 0.4rem 0 1rem;">
-      Preuzima .ics fajl — otvori ga i uveze se u Google/Apple kalendar, koji te onda podsjeti i kad aplikacija nije otvorena. Svaki test dobija podsjetnik dva dana prije i sat vremena prije.
+      Ako su obavještenja uključena (tab Raspored), svaki test te automatski podsjeti 2 dana i dan prije, i ujutro na dan testa. Kalendar (.ics) je opcionalan.
     </div>
 
     <div id="tests-list"></div>
@@ -343,7 +380,7 @@
 
     <button type="button" id="export-tasks-btn" class="add-btn secondary">📅 Izvezi sve u kalendar</button>
     <div class="hint" style="margin: 0.4rem 0 1rem;">
-      Isto kao kod testova — svaki nezavršen zadatak dobija podsjetnik dva dana prije i sat vremena prije roka.
+      Ako su obavještenja uključena, svaki nezavršen zadatak te podsjeti dan prije i na dan roka. Kalendar (.ics) je opcionalan.
     </div>
 
     <div id="tasks-list"></div>
@@ -388,8 +425,8 @@
   <button data-tab="schedule" type="button"><span class="icon">🗓️</span><span>Raspored</span></button>
   <button data-tab="calc" class="active" type="button"><span class="icon">🧮</span><span data-i18n="nav.calc">Kalkulator</span></button>
   <button data-tab="gcode" type="button"><span class="icon">🔤</span><span data-i18n="nav.gcode">G-kod</span></button>
-  <button data-tab="lectures" type="button"><span class="icon">🔊</span><span>Predavanja</span></button>
   <button data-tab="cref" type="button"><span class="icon">💻</span><span>C</span></button>
+  <button data-tab="lectures" type="button"><span class="icon">🔊</span><span>Predavanja</span></button>
   <button data-tab="curriculum" type="button"><span class="icon">📘</span><span data-i18n="nav.curriculum">3. razred</span></button>
   <button data-tab="resources" type="button"><span class="icon">📚</span><span data-i18n="nav.resources">Resursi</span></button>
   <button data-tab="journal" type="button"><span class="icon">📓</span><span>Dnevnik</span></button>
@@ -402,5 +439,7 @@
 <script src="lectures-data.js"></script>
 <script src="lectures.js"></script>
 <script src="app.js"></script>
+<script src="push-config.js"></script>
+<script src="push.js"></script>
 </body>
 </html>

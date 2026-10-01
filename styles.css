@@ -85,7 +85,7 @@ label {
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-select, input[type=number], input[type=search], input[type=text], input[type=date], textarea {
+select, input[type=number], input[type=search], input[type=text], input[type=date], input[type=time], textarea {
   width: 100%;
   padding: 0.55rem 0.5rem;
   border: 1px solid var(--border);
@@ -391,6 +391,12 @@ ul.module-topics li { margin-bottom: 0.15rem; }
 }
 .tip-list li { margin-bottom: 0.4rem; }
 
+[hidden] { display: none !important; }
+.push-state { font-size: 0.9rem; margin-bottom: 0.2rem; }
+.push-warn { margin-top: 0.6rem; }
+.push-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin: 0.8rem 0 0.2rem; font-weight: normal; text-transform: none; color: var(--text); }
+.push-check input { width: auto; margin: 0; }
+
 /* Lectures & voice */
 .voice-panel { padding: 0.9rem; }
 .voice-status {
@@ -458,6 +464,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .lesson-head h2 { margin: 0.2rem 0 0; font-size: 1.15rem; }
 .lesson-body { font-size: 0.93rem; line-height: 1.65; }
 .lesson-body p { margin: 0.7rem 0; }
+.lesson-fig { margin: 0.8rem 0; }
+.lesson-fig img { display: block; width: 100%; height: auto; background: #fff; border-radius: 10px; border: 1px solid var(--border, #d0d4dc); }
+.lesson-fig figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; text-align: center; }
 .lesson-summary { color: var(--muted); font-style: italic; }
 .lesson-h { margin: 1.2rem 0 0.2rem; font-size: 1rem; color: var(--accent); }
 .sent { cursor: pointer; border-radius: 3px; }
@@ -498,3 +507,37 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   padding: 0.1rem 0.2rem;
 }
 .player-progress { font-size: 0.78rem; color: var(--muted); min-width: 4rem; }
+
+/* ---------- Schedule: now / next ---------- */
+.schedule-now {
+  background: var(--result-bg);
+  border: 1px solid var(--result-border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.schedule-now-label {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  margin-right: 0.5rem;
+  vertical-align: 1px;
+}
+.schedule-now-time { color: var(--muted); font-size: 0.85rem; }
+.journal-item.now {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.journal-item.next {
+  border-color: var(--result-border);
+  box-shadow: inset 3px 0 0 var(--result-border);
+}
+.push-apk { text-align: center; text-decoration: none; margin: 0.6rem 0 0; }

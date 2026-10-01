@@ -1,0 +1,15 @@
+{
+  "appId": "ba.tggeorge.cncpomocnik",
+  "appName": "CNC Pomoćnik",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#16181d",
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notify",
+      "iconColor": "#1a5fb4"
+    }
+  }
+}

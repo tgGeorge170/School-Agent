@@ -17,6 +17,7 @@
     adaptRow: $("voice-adapt-row"),
     testText: $("voice-test-text"),
     testBtn: $("voice-test-btn"),
+    installBtn: $("voice-install-btn"),
     settings: $("voice-settings"),
     browse: $("lecture-browse"),
     reader: $("lecture-reader"),
@@ -195,6 +196,24 @@
     return (window.LECTURES || []).slice().sort((a, b) => (a.order || 99) - (b.order || 99));
   }
 
+  // A section picture is inline SVG markup or an image URL. It is shown as an
+  // <img>, so SVG from the downloaded lessons can never run scripts.
+  function figure(img, cap) {
+    const fig = document.createElement("figure");
+    fig.className = "lesson-fig";
+    const im = document.createElement("img");
+    im.src = img.trim().startsWith("<svg") ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(img) : img;
+    im.alt = cap || "";
+    im.loading = "lazy";
+    fig.appendChild(im);
+    if (cap) {
+      const fc = document.createElement("figcaption");
+      fc.textContent = cap;
+      fig.appendChild(fc);
+    }
+    return fig;
+  }
+
   function renderBrowse() {
     const list = subjects();
     els.browse.innerHTML = "";
@@ -304,6 +323,7 @@
         body.appendChild(h);
         collected.push({ text: sec.h + ".", el: h });
       }
+      if (sec.img) body.appendChild(figure(sec.img, sec.cap));
       (sec.p || []).forEach((para) => {
         const p = document.createElement("p");
         p.appendChild(sentenceNodes(para, collected));
@@ -342,11 +362,65 @@
     // the panel and let the student get straight to the lessons.
     if (Voice.quality() === "exact") els.settings.open = false;
   });
-  if (Voice.supported) {
-    speechSynthesis.addEventListener("voiceschanged", () => {
-      Voice.load().then(() => { fillVoices(); updateStatus(); });
-    });
+  const reloadVoices = () => Voice.load().then(() => { fillVoices(); updateStatus(); });
+  if (typeof speechSynthesis !== "undefined" && speechSynthesis.addEventListener) {
+    speechSynthesis.addEventListener("voiceschanged", reloadVoices);
   }
+
+  // In the APK a voice installed from Android settings shows up only once the
+  // student comes back to the app, so look again then.
+  if (Voice.openInstall) {
+    els.installBtn.hidden = false;
+    els.installBtn.addEventListener("click", () => Voice.openInstall().catch(() => {}));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reloadVoices(); });
+  }
+  // ---------- online lessons ----------
+  // New lessons are downloaded through the worker, so no APK update is needed;
+  // the last download is kept for offline use.
+  const STORE = "lectures-online-v1";
+  const validLectures = (d) => Array.isArray(d) && d.length > 0 &&
+    d.every((s) => s && typeof s.subject === "string" && Array.isArray(s.lessons));
+  try {
+    const cached = JSON.parse(localStorage.getItem(STORE));
+    if (validLectures(cached)) window.LECTURES = cached;
+  } catch (e) {}
+
+  // Straight from GitHub when the worker is unreachable or not yet deployed;
+  // only the JSON inside concat(...) is parsed, nothing is executed.
+  const GITHUB_SRC =
+    "https://raw.githubusercontent.com/tgGeorge170/School-Agent/claude/notifications-problem-analysis-3nc0cb/lectures-data.js";
+  function fromGithub() {
+    return fetch(GITHUB_SRC, { cache: "no-store" })
+      .then((r) => (r.ok ? r.text() : ""))
+      .then((text) => {
+        const start = text.indexOf(".concat(");
+        const end = text.lastIndexOf(");");
+        return start < 0 || end < start ? null : JSON.parse(text.slice(start + 8, end));
+      });
+  }
+
+  let lastFetch = 0;
+  function refreshLectures() {
+    const base = self.PUSH_CONFIG && self.PUSH_CONFIG.workerUrl;
+    if (Date.now() - lastFetch < 10 * 60e3) return;
+    lastFetch = Date.now();
+    (base ? fetch(base + "/lectures.json", { cache: "no-store" }) : Promise.reject())
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => (validLectures(data) ? data : Promise.reject()))
+      .catch(fromGithub)
+      .then((data) => {
+        if (!validLectures(data)) return;
+        const text = JSON.stringify(data);
+        if (text === JSON.stringify(window.LECTURES)) return;
+        try { localStorage.setItem(STORE, text); } catch (e) {}
+        window.LECTURES = data;
+        if (els.reader.hidden) renderBrowse();
+      })
+      .catch(() => {});
+  }
+  document.addEventListener("DOMContentLoaded", refreshLectures);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshLectures(); });
+
   syncSettingsUI();
   renderBrowse();
 

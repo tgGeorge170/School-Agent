@@ -1,0 +1,16 @@
+name = "school-agent-push"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[[kv_namespaces]]
+binding = "CNC_PUSH"
+id = "a503e686390d43ada4dd07d8e9e0060a"
+
+[vars]
+VAPID_SUBJECT = "mailto:djordjerad009@gmail.com"
+VAPID_PUBLIC_KEY = "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ"
+
+[triggers]
+# Every 5 minutes; the worker converts to Europe/Sarajevo time itself (DST-safe)
+# and only sends what's due. 288 KV list ops/day, well under the free 1000.
+crons = ["*/5 * * * *"]

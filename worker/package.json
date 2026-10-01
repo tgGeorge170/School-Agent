@@ -1,0 +1,11 @@
+{
+  "name": "school-agent-push",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Cloudflare Worker: web-push reminders (schedule, tests, homework) for CNC School Companion",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "deploy": "wrangler deploy"
+  }
+}

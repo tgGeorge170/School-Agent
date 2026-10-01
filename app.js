@@ -2,105 +2,85 @@
 (function () {
   const buttons = document.querySelectorAll(".tabbar button");
   const panels = document.querySelectorAll(".tab-panel");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.tab;
-      buttons.forEach((b) => b.classList.toggle("active", b === btn));
-      panels.forEach((p) => p.classList.toggle("active", p.id === target));
-      window.scrollTo(0, 0);
-    });
-  });
+  function show(target) {
+    if (![...panels].some((p) => p.id === target)) return;
+    buttons.forEach((b) => b.classList.toggle("active", b.dataset.tab === target));
+    panels.forEach((p) => p.classList.toggle("active", p.id === target));
+    window.scrollTo(0, 0);
+  }
+  buttons.forEach((btn) => btn.addEventListener("click", () => show(btn.dataset.tab)));
+  // Notification taps open e.g. ./#journal
+  const openFromHash = () => {
+    if (location.hash) {
+      show(location.hash.slice(1));
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+  };
+  window.addEventListener("hashchange", openFromHash);
+  openFromHash();
 })();
 
 // ---------- Schedule ----------
 (function () {
   const listEl = document.getElementById("schedule-list");
   if (!listEl) return;
-  const dayNames = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"];
-  const todayName = dayNames[new Date().getDay()];
+  const now = new Date();
+  const todayName = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"][now.getDay()];
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  // "13:10–13:55" -> [790, 835] (minutes since midnight, start & end)
+  function parsePeriod(str) {
+    const m = String(str).match(/(\d{1,2}):(\d{2})\D+(\d{1,2}):(\d{2})/);
+    return m ? [+m[1] * 60 + +m[2], +m[3] * 60 + +m[4]] : null;
+  }
+
+  // Which of today's classes is happening now, and which is next.
+  const today = SCHEDULE.find((d) => d.day === todayName);
+  let nowIdx = -1;
+  let nextIdx = -1;
+  if (today) {
+    today.classes.forEach((cls, i) => {
+      const p = parsePeriod(PERIOD_TIMES[i]);
+      if (!p) return;
+      if (nowMin >= p[0] && nowMin < p[1]) nowIdx = i;
+      if (nowMin < p[0] && nextIdx === -1) nextIdx = i;
+    });
+  }
 
   listEl.innerHTML = "";
+
+  // Status banner at the top.
+  const banner = document.createElement("div");
+  banner.className = "schedule-now";
+  if (!today) {
+    banner.textContent = "Danas nema nastave — uživaj u vikendu.";
+  } else if (nowIdx >= 0) {
+    const p = parsePeriod(PERIOD_TIMES[nowIdx]);
+    const endStr = String(Math.floor(p[1] / 60)).padStart(2, "0") + ":" + String(p[1] % 60).padStart(2, "0");
+    banner.innerHTML = `<span class="schedule-now-label">Sada</span>${today.classes[nowIdx]} <span class="schedule-now-time">do ${endStr}</span>`;
+  } else if (nextIdx >= 0) {
+    const p = parsePeriod(PERIOD_TIMES[nextIdx]);
+    const startStr = String(Math.floor(p[0] / 60)).padStart(2, "0") + ":" + String(p[0] % 60).padStart(2, "0");
+    banner.innerHTML = `<span class="schedule-now-label">Sljedeće</span>${today.classes[nextIdx]} <span class="schedule-now-time">u ${startStr}</span>`;
+  } else {
+    banner.textContent = "Nastava za danas je gotova.";
+  }
+  listEl.appendChild(banner);
+
   SCHEDULE.forEach((day) => {
+    const isToday = day.day === todayName;
     const h = document.createElement("div");
     h.className = "section-heading";
-    h.textContent = day.day + (day.day === todayName ? " — danas" : "");
+    h.textContent = day.day + (isToday ? " — danas" : "");
     listEl.appendChild(h);
     day.classes.forEach((cls, i) => {
       const div = document.createElement("div");
       div.className = "journal-item";
+      if (isToday && i === nowIdx) div.classList.add("now");
+      else if (isToday && i === nextIdx) div.classList.add("next");
       div.innerHTML = `<div class="journal-item-head"><span class="journal-date">${PERIOD_TIMES[i] || i + 1 + "."}</span><span class="journal-subject">${cls}</span></div>`;
       listEl.appendChild(div);
     });
-  });
-
-  // ---- Recurring weekly calendar export ----
-  // A cron/push-notification approach only lasts 7 days and needs an active
-  // session — a recurring calendar event, imported once, notifies forever
-  // via the phone's own calendar app with no ongoing dependency on this app.
-  const exportBtn = document.getElementById("export-schedule-btn");
-  if (!exportBtn) return;
-
-  const DAY_INFO = {
-    Ponedjeljak: { dow: 1, byday: "MO" },
-    Utorak: { dow: 2, byday: "TU" },
-    Srijeda: { dow: 3, byday: "WE" },
-    Četvrtak: { dow: 4, byday: "TH" },
-    Petak: { dow: 5, byday: "FR" },
-  };
-
-  function pad(n) { return String(n).padStart(2, "0"); }
-  function icsEscape(str) {
-    return String(str || "").replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
-  }
-  function nextDateForDow(targetDow) {
-    const d = new Date();
-    d.setDate(d.getDate() + ((targetDow - d.getDay() + 7) % 7));
-    return d;
-  }
-  function fmtLocal(d, hh, mm) {
-    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(hh)}${pad(mm)}00`;
-  }
-  function parseTime(range, part) {
-    const [start, end] = range.split("–");
-    const [h, m] = (part === "start" ? start : end).split(":").map(Number);
-    return { h, m };
-  }
-
-  exportBtn.addEventListener("click", () => {
-    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CNC Skolski Pomocnik//Raspored//SR", "CALSCALE:GREGORIAN"];
-    SCHEDULE.forEach((day) => {
-      const info = DAY_INFO[day.day];
-      if (!info) return;
-      const date = nextDateForDow(info.dow);
-      const startT = parseTime(PERIOD_TIMES[0], "start");
-      const endT = parseTime(PERIOD_TIMES[day.classes.length - 1], "end");
-      lines.push(
-        "BEGIN:VEVENT",
-        `UID:raspored-${info.byday}@cnc-companion.local`,
-        `DTSTAMP:${fmtLocal(new Date(), 0, 0)}Z`,
-        `DTSTART:${fmtLocal(date, startT.h, startT.m)}`,
-        `DTEND:${fmtLocal(date, endT.h, endT.m)}`,
-        `RRULE:FREQ=WEEKLY;BYDAY=${info.byday}`,
-        `SUMMARY:${icsEscape("Nastava — " + day.day)}`,
-        `DESCRIPTION:${icsEscape(day.classes.join("\n"))}`,
-        "BEGIN:VALARM",
-        "ACTION:DISPLAY",
-        "DESCRIPTION:Podsjetnik na nastavu",
-        "TRIGGER:-PT2H20M",
-        "END:VALARM",
-        "END:VEVENT"
-      );
-    });
-    lines.push("END:VCALENDAR");
-    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "raspored.ics";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
 })();
 
@@ -457,7 +437,7 @@
 })();
 
 // ---------- Service worker registration ----------
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && !window.NativeApp) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });

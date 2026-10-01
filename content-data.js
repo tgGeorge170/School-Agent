@@ -11,9 +11,9 @@ const PERIOD_TIMES = [
   "18:25–19:10",
 ];
 
-// Weekly schedule for 3 CNC, group G2 (Praktična nastava / Računari i
+// Weekly schedule for 3 CNC, group G1 (Praktična nastava / Računari i
 // programiranje), from the school's official raspored (FET export, valid
-// from 1.9.2026). Split-group periods show only the G2 side.
+// from 1.9.2026). Split-group periods show only the G1 side.
 const SCHEDULE = [
   { day: "Ponedjeljak", classes: [
     "Hidraulika i pneumatika — A. Rapaić",

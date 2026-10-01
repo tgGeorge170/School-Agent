@@ -69,4 +69,29 @@ those require a real HTTP(S) origin.
   ranking, speech normalisation, sentence splitting, playback queue.
 - `lectures.js`, `lectures-data.js` — the Predavanja tab and its lesson
   content. `lectures-data.js` documents the shape each lesson takes; it is
-  filled in from photos of the student's own notebook.
+  filled in from photos of the student's own notebook. The app also
+  downloads it from this branch through the worker's `/lectures.json`, so new
+  lessons show up without installing a new APK.
+
+## Push notifications (`worker/`)
+
+`school-agent-push` is a Cloudflare Worker that sends reminders while the app
+is closed: the day's schedule at 10:50 on school days, tests (2 days and 1 day
+before at 19:00, and the morning of), and open homework (the evening before and
+the morning of the due date). Times can be changed in the app (Raspored tab).
+
+- The app (`push.js`) syncs the schedule, tests and tasks to the Worker whenever
+  they change, and re-registers on every open, so the server never goes stale.
+- A cron runs every 5 minutes and converts to Europe/Sarajevo time itself, so
+  DST changes don't shift reminders. Missed runs are caught up for 30 minutes;
+  each reminder is sent once.
+- "Pošalji probno obavještenje" sends a real push and reports the push
+  service's answer.
+
+Deploy: `cd worker && npx wrangler deploy` (the `VAPID_PRIVATE_KEY` secret is
+already set on the Worker; `ADMIN_SECRET` is optional, for `/api/test-notify`
+and `/api/run-reminders`). Tests: `cd worker && npm test`.
+
+Android: install the app from **Chrome**, not Brave (Brave doesn't wake up for
+push, so notifications only show when the app is opened). On Samsung, set
+Chrome's battery usage to *Unrestricted*.
