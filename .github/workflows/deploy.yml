@@ -25,6 +25,14 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - name: Create the D1 database if missing
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          find_id() { npx -y wrangler@4 d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const db=JSON.parse(s).find(d=>d.name==="school-agent");console.log(db?db.uuid:"")})'; }
+          id=$(find_id)
+          if [ -z "$id" ]; then npx -y wrangler@4 d1 create school-agent; id=$(find_id); fi
+          test -n "$id"
+          sed -i "s/REPLACED_BY_DEPLOY/$id/" wrangler.toml
       - name: Deploy
         if: env.CLOUDFLARE_API_TOKEN != ''
         run: npx -y wrangler@4 deploy

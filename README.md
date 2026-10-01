@@ -73,6 +73,21 @@ those require a real HTTP(S) origin.
   downloads it from this branch through the worker's `/lectures.json`, so new
   lessons show up without installing a new APK.
 
+## Professor accounts (`profesor.html`, `worker/src/auth.js`)
+
+Professors log in at `profesor.html` (also linked from the Predavanja tab).
+Accounts are invite-only and live in the Worker's D1 database
+(`school-agent`, created by the deploy workflow; tables are created on first use).
+
+- **First run:** the page asks for a setup code, which is the Worker's
+  `ADMIN_SECRET` secret, and creates the first admin account.
+- **Invite:** the admin enters a name and email and gets a one-time link
+  (valid 48 h) to send to the professor, who opens it and picks a password.
+- **Forgot password:** the admin generates a reset link (valid 1 h).
+- The admin assigns subjects to each professor and can disable accounts.
+- Passwords are hashed with PBKDF2-SHA256; sessions last 30 days; 5 wrong
+  passwords lock the email for 15 minutes.
+
 ## Push notifications (`worker/`)
 
 `school-agent-push` is a Cloudflare Worker that sends reminders while the app

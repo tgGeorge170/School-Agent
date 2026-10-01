@@ -100,14 +100,15 @@ Permissions (checked in the Worker on every write request):
 
 Screens (Serbian, matching the app's style):
 1. **Prijava**: email + lozinka, "Zaboravili ste lozinku?"
-2. **Postavi lozinku**: the professor opens the invite email link and picks a password.
-3. **Reset lozinke**: from the email link.
+2. **Postavi lozinku**: the professor opens the invite link and picks a password.
+3. **Reset lozinke**: from a reset link the admin generates.
 4. **Moji predmeti**: after login, the subjects assigned to this professor.
 5. **Odjava** (log out), session remembered on the device.
 
 How professors get in:
 - **Invite-only.** No public sign-up, so random people can't post lessons.
-  An admin enters the professor's email and the professor gets an invite email.
+  An admin enters the professor's name and email, the app shows a one-time
+  link, and the admin sends it themselves (Viber, email). No email service needed.
 - The entry point is a "Za profesore" button in the app's settings / footer,
   plus a direct web link (`…/#/profesor`) for using it on a computer.
 - On Android/iOS, invite and reset links open the app (deep links).
@@ -168,10 +169,10 @@ students are anonymous).
 - Short quizzes from the lesson's key points.
 - Statistics for professors (how many students opened a lesson).
 
-## Open decisions
+## Status
 
-1. Invite and password-reset emails: send them through an email service
-   (e.g. Resend, free up to 3000/month, needs a domain), or have the admin
-   copy the invite link and send it to the professor themselves (no email
-   service, simplest to start)?
-2. OK to merge the APK branch into `main` and make `main` the single source?
+- [x] Phase 0: Android/worker branch merged into one branch
+- [x] Phase 1: login, invites, reset links, admin user list (`worker/src/auth.js`, `profesor.html`)
+- [ ] Phase 2: lesson editor
+- [ ] Phase 3: every smjer and razred
+- [ ] Phase 4: stores

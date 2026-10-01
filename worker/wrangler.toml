@@ -7,6 +7,7 @@ binding = "CNC_PUSH"
 id = "a503e686390d43ada4dd07d8e9e0060a"
 
 [vars]
+APP_URL = "https://school-agent.pages.dev"
 VAPID_SUBJECT = "mailto:djordjerad009@gmail.com"
 VAPID_PUBLIC_KEY = "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkalUn74B4PY3g7HD4ZZbL9-tdzeydQ"
 
@@ -14,3 +15,10 @@ VAPID_PUBLIC_KEY = "BGowme9gW7VoopuxI151WN_Oq7pirXETfCeoMnLrAq-jTrK3lqjAd2TPKkal
 # Every 5 minutes; the worker converts to Europe/Sarajevo time itself (DST-safe)
 # and only sends what's due. 288 KV list ops/day, well under the free 1000.
 crons = ["*/5 * * * *"]
+
+# Professor accounts and lessons. The deploy workflow creates the database and
+# fills in database_id; the Worker creates its tables on first use.
+[[d1_databases]]
+binding = "DB"
+database_name = "school-agent"
+database_id = "REPLACED_BY_DEPLOY"
