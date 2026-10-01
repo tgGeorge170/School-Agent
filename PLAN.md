@@ -9,7 +9,7 @@ Microsoft Store (Windows).
 | Piece | Where | Notes |
 |---|---|---|
 | Web app (PWA) | `main`, GitHub Pages | Vanilla JS, no build step, Serbian/EN |
-| Android APK | branch `claude/notifications-problem-analysis-3nc0cb` (`android-app/`) | Capacitor 8, CI builds the APK, emulator test |
+| Android APK | `android-app/` (was on its own branch, now merged) | Capacitor 8, CI builds the APK, emulator test |
 | Backend | `worker/` (Cloudflare Worker + KV) | Push reminders, serves `/lectures.json` and the APK |
 | Lessons | `lectures-data.js` in git | Only we can add lessons (photos → `nova-lekcija` skill → push) |
 
@@ -172,7 +172,8 @@ students are anonymous).
 ## Status
 
 - [x] Phase 0: Android/worker branch merged into one branch
-- [x] Phase 1: login, invites, reset links, admin user list (`worker/src/auth.js`, `profesor.html`)
+- [x] Phase 0b: everything lives on `main`; accounts run in their own Worker `school-agent-api` (`api/`)
+- [x] Phase 1: login, invites, reset links, admin user list (`api/src/auth.js`, `profesor.html`)
 - [ ] Phase 2: lesson editor
 - [ ] Phase 3: every smjer and razred
 - [ ] Phase 4: stores

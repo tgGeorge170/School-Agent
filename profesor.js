@@ -10,7 +10,7 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
     del(k) { try { localStorage.removeItem(k); } catch (e) {} },
   };
-  const API = (store.get("cncApiUrl") || (self.PUSH_CONFIG && self.PUSH_CONFIG.workerUrl) || "").replace(/\/+$/, "");
+  const API = (store.get("cncApiUrl") || (self.PUSH_CONFIG && self.PUSH_CONFIG.apiUrl) || "").replace(/\/+$/, "");
 
   const VIEWS = ["view-loading", "view-error", "view-setup", "view-login", "view-link", "view-home"];
   const SUBTITLES = {

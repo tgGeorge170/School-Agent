@@ -1,0 +1,11 @@
+{
+  "name": "school-agent-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Cloudflare Worker: professor accounts and lessons (D1)",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "deploy": "wrangler deploy"
+  }
+}

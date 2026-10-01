@@ -2,7 +2,7 @@ name: Android app
 
 on:
   push:
-    branches: [claude/notifications-problem-analysis-3nc0cb]
+    branches: [main]
     paths-ignore: ["**.md", "worker/wrangler.toml", "lectures-data.js"]
   workflow_dispatch:
 

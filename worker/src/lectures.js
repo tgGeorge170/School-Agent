@@ -1,7 +1,7 @@
 // Serves lesson content from lectures-data.js on GitHub, so the app gets new
 // lessons without a new APK. Only the JSON inside concat(...) is used; no code runs.
 export const LECTURES_SRC =
-  "https://raw.githubusercontent.com/tgGeorge170/School-Agent/claude/notifications-problem-analysis-3nc0cb/lectures-data.js";
+  "https://raw.githubusercontent.com/tgGeorge170/School-Agent/main/lectures-data.js";
 
 export function extractLectures(text) {
   const start = text.indexOf(".concat(");

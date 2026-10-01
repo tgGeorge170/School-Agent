@@ -24,11 +24,10 @@ content that isn't in the photos.
 
 ## 2. Write the lessons
 
-Lessons live in `lectures-data.js` on branch
-`claude/notifications-problem-analysis-3nc0cb` (the APK branch). The app
+Lessons live in `lectures-data.js` on branch `main`. The app
 downloads that file from GitHub, so pushing it is all it takes: no new APK.
 
-- Check out that branch (`git fetch origin claude/notifications-problem-analysis-3nc0cb`).
+- Check out that branch (`git fetch origin main`).
 - One entry per subject. If the subject exists, append lessons to it; don't duplicate it.
   Subject ids/icons: `termodinamika` 🔥, `cnc-programiranje` 🔧,
   `hidraulika-i-pneumatika` 💧, `masinski-elementi` ⚙️, `tehnologija-obrade` 🛠️,

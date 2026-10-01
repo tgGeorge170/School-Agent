@@ -1,0 +1,13 @@
+name = "school-agent-api"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+APP_URL = "https://school-agent.pages.dev"
+
+# The deploy workflow creates the database and fills in database_id; the
+# Worker creates its tables on first use. ADMIN_SECRET is a secret (dashboard).
+[[d1_databases]]
+binding = "DB"
+database_name = "school-agent"
+database_id = "REPLACED_BY_DEPLOY"

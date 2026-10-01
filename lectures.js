@@ -388,7 +388,7 @@
   // Straight from GitHub when the worker is unreachable or not yet deployed;
   // only the JSON inside concat(...) is parsed, nothing is executed.
   const GITHUB_SRC =
-    "https://raw.githubusercontent.com/tgGeorge170/School-Agent/claude/notifications-problem-analysis-3nc0cb/lectures-data.js";
+    "https://raw.githubusercontent.com/tgGeorge170/School-Agent/main/lectures-data.js";
   function fromGithub() {
     return fetch(GITHUB_SRC, { cache: "no-store" })
       .then((r) => (r.ok ? r.text() : ""))

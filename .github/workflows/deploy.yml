@@ -1,24 +1,40 @@
-name: Deploy push worker
+name: Deploy workers
 
 # The app itself is deployed by Cloudflare Pages' GitHub integration; this
-# only tests and deploys the school-agent-push Worker.
+# tests and deploys the two Workers: school-agent-push and school-agent-api.
 on:
   push:
-    branches: [claude/notifications-problem-analysis-3nc0cb]
-    paths: ["worker/**", ".github/workflows/deploy.yml"]
+    branches: [main]
+    paths: ["worker/**", "api/**", ".github/workflows/deploy.yml"]
   workflow_dispatch:
 
-concurrency: deploy-worker
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: fe89fdf1a9c3a41592051a8c0a0fca28
 
 jobs:
-  deploy:
+  push-worker:
     runs-on: ubuntu-latest
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: fe89fdf1a9c3a41592051a8c0a0fca28
+    concurrency: deploy-worker
     defaults:
       run:
         working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Deploy
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npx -y wrangler@4 deploy
+
+  api-worker:
+    runs-on: ubuntu-latest
+    concurrency: deploy-api
+    defaults:
+      run:
+        working-directory: api
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

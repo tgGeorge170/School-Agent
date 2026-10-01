@@ -384,10 +384,6 @@ function match(method, pathname) {
   return handler ? { handler, id: Number(m[1]) } : null;
 }
 
-export function isAuthPath(pathname) {
-  return pathname === "/api/me" || pathname === "/api/subjects" || pathname.startsWith("/api/auth/") || pathname.startsWith("/api/admin/");
-}
-
 export async function handleAuth(request, env, url, headers, now = Date.now()) {
   const reply = (data, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
