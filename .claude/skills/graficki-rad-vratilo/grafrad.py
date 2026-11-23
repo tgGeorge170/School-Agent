@@ -217,159 +217,274 @@ def fill_form(inp, r, out):
 
 # ---------------- proračun korak po korak ----------------
 def steps_doc(inp, r, out):
-    import docx
+    import re, subprocess, tempfile, docx
     from docx.shared import Pt, RGBColor
-    D = docx.Document()
-    st = D.styles['Normal']; st.font.name = 'Cambria'; st.font.size = Pt(12)
-    H = lambda t, l=1: D.add_heading(t, l)
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
 
-    def L(*lines):
-        for x in lines:
-            p = D.add_paragraph(x); p.paragraph_format.space_after = Pt(2)
+    def M(x, n=None):
+        return fmt(x, n).replace('−', '-').replace(',', '{,}')
 
-    def B(t):
-        p = D.add_paragraph(); rr = p.add_run(t); rr.bold = True; rr.font.color.rgb = RGBColor(0xC0, 0, 0)
+    md = []
 
-    f = fmt
-    a = f(r['a']); l = f(inp['l']); d2 = f(inp['d1'] / 2)
-    D.add_heading('GRAFIČKI RAD I – KONSTRUKCIJA VRATILA', 0)
-    if inp.get('ime'): L(f"Učenik: {inp['ime']}")
-    H('PRORAČUN – VRATILO I')
-    H('Polazni podaci', 2)
-    L(f"Snaga na pogonskom vratilu: P = {f(inp['P'])} kW = {f(inp['P'] * 1000)} W",
-      f"Broj obrtaja el. motora: n₁ = {f(inp['n'])} o/min",
-      f"Materijal vratila: Č.{r['mat']}",
-      f"Vrsta radne mašine: K_A = {f(inp['KA'])}",
-      f"Rastojanje između ležaja: l₁ = {l} mm  (zupčanik na sredini: {a} + {a} mm)",
-      f"Obimna sila: F_t1 = {f(inp['Ft'])} N", f"Radijalna sila: F_r1 = {f(inp['Fr'])} N",
-      f"Aksijalna sila: F_a1 = {f(inp['Fa'])} N",
-      f"Podeoni prečnik zupčanika: d₁ = {f(inp['d1'])} mm  →  d₁/2 = {d2} mm")
-    Fr, Fa, Ft = f(inp['Fr']), f(inp['Fa']), f(inp['Ft'])
-    x1, x2 = rnd(inp['Fr'] * r['a']), rnd(inp['Fa'] * inp['d1'] / 2)
-    H('1.1. OTPORI OSLONACA')
-    H('1.1.1. Otpori oslonaca u "H" ravni', 2)
-    L('ΣM_A = 0', f'− F_BH · {l} + F_r1 · {a} + F_a1 · d₁/2 = 0',
-      f'F_BH = (F_r1 · {a} + F_a1 · d₁/2) / {l} = ({Fr} · {a} + {Fa} · {f(inp["d1"])}/2) / {l}',
-      f'F_BH = ({f(x1)} + {f(x2)}) / {l} = {f(x1 + x2)} / {l} = {f(r["FBH"])} N', '',
-      'ΣM_B = 0', f'F_AH · {l} − F_r1 · {a} + F_a1 · d₁/2 = 0',
-      f'F_AH = (F_r1 · {a} − F_a1 · d₁/2) / {l} = ({Fr} · {a} − {Fa} · {f(inp["d1"])}/2) / {l}',
-      f'F_AH = ({f(x1)} − {f(x2)}) / {l} = {f(x1 - x2)} / {l} = {f(r["FAH"])} N')
-    H('1.1.2. Otpori oslonaca u "V" ravni', 2)
-    L('ΣM_A = 0', f'− F_BV · {l} + F_t1 · {a} = 0',
-      f'F_BV = F_t1 · {a} / {l} = {Ft} · {a} / {l} = {f(r["FBV"])} N', f'F_AV = F_BV = {f(r["FAV"])} N')
-    H('1.1.3. Rezultujući otpori oslonaca', 2)
-    L(f'F_A = √(F_AH² + F_AV²) = √({f(r["FAH"])}² + {f(r["FAV"])}²) = {f(r["FA"])} N',
-      f'F_B = √(F_BH² + F_BV²) = √({f(r["FBH"])}² + {f(r["FBV"])}²) = {f(r["FB"])} N')
-    H('1.2. MOMENTI SAVIJANJA')
-    H('1.2.1. Momenti savijanja u "V" i "H" ravni', 2)
-    L(f'Mˡ_szV = Mᵈ_szV = − F_AV · {a} = − {f(r["FAV"])} · {a} = {f(r["MV"])} Nmm',
-      f'Mˡ_szH = − F_AH · {a} = − {f(r["FAH"])} · {a} = {f(r["MlH"])} Nmm',
-      f'Mˡᵈ_szH = − F_AH · {a} − F_a1 · d₁/2 = − {f(r["FAH"])} · {a} − {Fa} · {f(inp["d1"])}/2 = {f(r["MlH"])} − {f(rnd(inp["Fa"] * inp["d1"] / 2))} = {f(r["MldH"])} Nmm',
-      f'Mᵈ_szH = − F_BH · {a} = − {f(r["FBH"])} · {a} = {f(r["MdH"])} Nmm')
-    H('1.2.2. Rezultujući momenti savijanja', 2)
-    L(f'Mˡ_sz = √((Mˡ_szH)² + (Mˡ_szV)²) = √(({f(r["MlH"])})² + ({f(r["MV"])})²) = {f(r["Ml"])} Nmm',
-      f'Mᵈ_sz = √((Mᵈ_szH)² + (Mᵈ_szV)²) = √(({f(r["MdH"])})² + ({f(r["MV"])})²) = {f(r["Md"])} Nmm',
-      'M_sS = 0,  M_sA = 0,  M_sB = 0',
-      f'Veći moment je {r["Mmax_name"]} = {f(r["Mmax"])} Nmm → on je mjerodavan za proračun (koristi se u 1.4.2).')
-    H('1.3. MEHANIČKE KARAKTERISTIKE MATERIJALA VRATILA')
-    L(f'Materijal vratila: Č.{r["mat"]} (Tabela 8)',
-      f'σ_D(−1) – savojna dinamička izdržljivost: σ_D(−1) = {r["sDr"][0]} ÷ {r["sDr"][1]} N/mm²',
-      f'      Usvajam: σ_D(−1) = {r["sD"]} N/mm²',
-      f'τ_D(0) – uvojna izdržljivost: τ_D(0) = {r["tDr"][0]} ÷ {r["tDr"][1]} N/mm²',
-      f'      Usvajam: τ_D(0) = {r["tD"]} N/mm²',
-      'α₀ – koeficijent:', f'α₀ = σ_D(−1) / τ_D(0) = {r["sD"]} / {r["tD"]} = {f(r["a0"])}')
-    H('1.3.1. Dozvoljeni napon savijanja', 2)
-    L(f'σ_sd = σ_D(−1) / S = {r["sD"]} / 4 = {f(r["ssd"])} N/mm²')
-    H('1.3.2. Dozvoljeni napon uvijanja', 2)
-    L(f'τ_ud = τ_D(0) / S = {r["tD"]} / 3 = {f(r["tud"])} N/mm²')
-    H('1.4. MJERODAVAN MOMENT ZA PRORAČUN VRATILA')
-    H('1.4.1.1. Ugaona brzina na ulaznom vratilu', 2)
-    L(f'ω₁ = π · n₁ / 30 = π · {f(inp["n"])} / 30 = {f(r["w"])} s⁻¹')
-    H('1.4.1. Obrtni moment (T) – moment uvijanja', 2)
-    L(f'T = (P / ω₁) · K_A = ({f(inp["P"])} · 10³ / {f(r["w"])}) · {f(inp["KA"])} = {f(r["TNm"])} Nm = {f(r["T"])} Nmm')
-    H('1.4.2. Uporedni moment', 2)
-    a0 = f(r['a0'])
-    L(f'M_iS = √((M_sS)² + (α₀/2 · T)²) = √(0² + ({a0}/2 · {f(r["T"])})²) = {f(r["Mis"])} Nmm',
-      f'M_iA = √((M_sA)² + (α₀/2 · T)²) = √(0² + ({a0}/2 · {f(r["T"])})²) = {f(r["Mis"])} Nmm',
-      f'M_iZ = √(({r["Mmax_name"]})² + (α₀/2 · T)²) = √({f(r["Mmax"])}² + ({a0}/2 · {f(r["T"])})²) = {f(r["Miz"])} Nmm')
-    H('1.5. DIMENZIONISANJE VRATILA I')
-    H('1.5.1. Idealni prečnici', 2)
-    L(f'd_iA = d_iS = ∛(32 · M_iA / (π · σ_sd)) = ∛(32 · {f(r["Mis"])} / (π · {f(r["ssd"])})) = {f(r["dis"])} mm',
-      f'd_iZ = ∛(32 · M_iZ / (π · σ_sd)) = ∛(32 · {f(r["Miz"])} / (π · {f(r["ssd"])})) = {f(r["diz"])} mm')
-    H('1.5.2. Stvarni prečnici', 2)
-    L('Stvarne prečnike dobijamo kada idealne povećamo za 20% i zaokružimo na prvi veći standardni prečnik (Tabela 1). '
-      'Između prečnika po redoslijedu S – A – Z mora biti razlika od najmanje 5 mm.',
-      f'ds_S = 1,2 · d_iS = 1,2 · {f(r["dis"])} = {f(r["dsS_c"])} mm', f'      Usvajam: ds_S = {r["dS"]} mm',
-      f'ds_A = ds_B = 1,2 · d_iA = 1,2 · {f(r["dis"])} = {f(r["dsS_c"])} mm  →  mora biti ≥ {r["dS"]} + 5 = {r["dS"] + 5} mm',
-      f'      Usvajam: ds_A = ds_B = {r["dA"]} mm',
-      f'ds_Z = 1,2 · d_iZ = 1,2 · {f(r["diz"])} = {f(r["dsZ_c"])} mm  →  mora biti ≥ {r["dA"]} + 5 = {r["dA"] + 5} mm')
+    def tx(_t, **v):
+        return re.sub(r'«(\w+)»', lambda m: str(v[m.group(1)]), _t)
+
+    def H(level, t): md.append('#' * level + ' ' + t)
+    def P(t): md.append(t)
+    def E(_t, **v): md.append('$$' + tx(_t, **v) + '$$')
+    def IM(_t, **v): return '$' + tx(_t, **v) + '$'
+    def box(style, *lines): md.append(f'::: {{custom-style="{style}"}}\n' + '\n\n'.join(lines) + '\n:::')
+
+    a, l, d1 = M(r['a']), M(inp['l']), M(inp['d1'])
+    Fr, Fa, Ft = M(inp['Fr']), M(inp['Fa']), M(inp['Ft'])
+    U = r'\ \mathrm{N}'; Nmm = r'\ \mathrm{Nmm}'; mm = r'\ \mathrm{mm}'; Nmm2 = r'\ \mathrm{N/mm^2}'
+
+    box('Naslov', 'П Р О Р А Ч У Н')
+    box('NaslovOkvir', 'ВРАТИЛО - I')
+    if inp.get('ime'): box('Desno', f"Ученик: {inp['ime']}")
+    H(2, 'ПОДАЦИ ЗА ПРОРАЧУН')
+    P(f"Снага на погонском вратилу: {IM(r'P = «v»\ \mathrm{kW}', v=M(inp['P']))}\n\n"
+      f"Број обртаја ел. мотора: {IM(r'n_1 = «v»\ \mathrm{min^{-1}}', v=M(inp['n']))}\n\n"
+      f"Материјал вратила: Č.{r['mat']}\n\n"
+      f"Врста радне машине: {IM(r'K_A = «v»', v=M(inp['KA']))}\n\n"
+      f"Растојање између лежаја: {IM(r'l_1 = «v»' + mm, v=l)}\n\n"
+      f"Обимна сила: {IM(r'F_{t1} = «v»' + U, v=Ft)}, радијална сила: {IM(r'F_{r1} = «v»' + U, v=Fr)}, "
+      f"аксијална сила: {IM(r'F_{a1} = «v»' + U, v=Fa)}\n\n"
+      f"Подеони пречник зупчаника: {IM(r'd_1 = «v»' + mm, v=d1)}")
+
+    H(2, '1.1. ОТПОРИ ОСЛОНАЦА')
+    H(3, '1.1.1. Отпори ослонаца у "H" равни:')
+    E(r'\sum M_A^{F_i} = 0')
+    P(IM(r'l = «l»\ \mathrm{mm}', l=l) + ' - задато растојање између лежаја (ослонаца) вратила I')
+    E(r'-F_{BH}\cdot «l» + F_{r1}\cdot «a» + F_{a1}\cdot\frac{d_1}{2} = 0', l=l, a=a)
+    E(r'F_{BH} = \frac{F_{r1}\cdot «a» + F_{a1}\cdot\frac{d_1}{2}}{«l»} = \frac{«Fr»\cdot «a» + «Fa»\cdot\frac{«d1»}{2}}{«l»} = «R»' + U,
+      a=a, l=l, Fr=Fr, Fa=Fa, d1=d1, R=M(r['FBH']))
+    E(r'\sum M_B^{F_i} = 0')
+    E(r'F_{AH}\cdot «l» - F_{r1}\cdot «a» + F_{a1}\cdot\frac{d_1}{2} = 0', l=l, a=a)
+    E(r'F_{AH} = \frac{F_{r1}\cdot «a» - F_{a1}\cdot\frac{d_1}{2}}{«l»} = \frac{«Fr»\cdot «a» - «Fa»\cdot\frac{«d1»}{2}}{«l»} = «R»' + U,
+      a=a, l=l, Fr=Fr, Fa=Fa, d1=d1, R=M(r['FAH']))
+    H(3, '1.1.2. Отпори ослонаца у "V" равни:')
+    E(r'\sum M_A^{F_i} = 0')
+    E(r'-F_{BV}\cdot «l» + F_{t1}\cdot «a» = 0', l=l, a=a)
+    E(r'F_{BV} = \frac{F_{t1}\cdot «a»}{«l»} = \frac{«Ft»\cdot «a»}{«l»} = «R»' + U, a=a, l=l, Ft=Ft, R=M(r['FBV']))
+    E(r'F_{AV} = F_{BV} = «R»' + U, R=M(r['FAV']))
+    H(3, '1.1.3. Резултујући отпори ослонаца:')
+    E(r'F_A = \sqrt{F_{AH}^2 + F_{AV}^2} = \sqrt{«x»^2 + «y»^2} = «R»' + U, x=M(r['FAH']), y=M(r['FAV']), R=M(r['FA']))
+    E(r'F_B = \sqrt{F_{BH}^2 + F_{BV}^2} = \sqrt{«x»^2 + «y»^2} = «R»' + U, x=M(r['FBH']), y=M(r['FBV']), R=M(r['FB']))
+
+    H(2, '1.2. МОМЕНТИ САВИЈАЊА')
+    H(3, '1.2.1. Моменти савијања у "V" и "H" равни:')
+    E(r'M^{l}_{sz_V} = M^{d}_{sz_V} = -F_{AV}\cdot «a» = -«x»\cdot «a» = «R»' + Nmm, a=a, x=M(r['FAV']), R=M(r['MV']))
+    E(r'M^{l}_{sz_H} = -F_{AH}\cdot «a» = -«x»\cdot «a» = «R»' + Nmm, a=a, x=M(r['FAH']), R=M(r['MlH']))
+    E(r'M^{ld}_{sz_H} = -F_{AH}\cdot «a» - F_{a1}\cdot\frac{d_1}{2} = -«x»\cdot «a» - «Fa»\cdot\frac{«d1»}{2} = «R»' + Nmm,
+      a=a, x=M(r['FAH']), Fa=Fa, d1=d1, R=M(r['MldH']))
+    E(r'M^{d}_{sz_H} = -F_{BH}\cdot «a» = -«x»\cdot «a» = «R»' + Nmm, a=a, x=M(r['FBH']), R=M(r['MdH']))
+    H(3, '1.2.2. Резултујући моменти савијања:')
+    E(r'M^{l}_{sz} = \sqrt{\left(M^{l}_{sz_H}\right)^2 + \left(M^{l}_{sz_V}\right)^2} = \sqrt{\left(«x»\right)^2 + \left(«y»\right)^2} = «R»' + Nmm,
+      x=M(r['MlH']), y=M(r['MV']), R=M(r['Ml']))
+    E(r'M^{d}_{sz} = \sqrt{\left(M^{d}_{sz_H}\right)^2 + \left(M^{d}_{sz_V}\right)^2} = \sqrt{\left(«x»\right)^2 + \left(«y»\right)^2} = «R»' + Nmm,
+      x=M(r['MdH']), y=M(r['MV']), R=M(r['Md']))
+    E(r'M_{s_{S}} = 0,\quad M_{s_A} = 0,\quad M_{s_B} = 0')
+    mname = r'M^{d}_{sz}' if r['Md'] >= r['Ml'] else r'M^{l}_{sz}'
+    P('Мјеродаван је већи резултујући момент савијања: ' + IM(mname + r' = «R»' + Nmm, R=M(r['Mmax'])))
+
+    H(2, '1.3. МЕХАНИЧКЕ КАРАКТЕРИСТИКЕ МАТЕРИЈАЛА ВРАТИЛА')
+    P(f"Материјал вратила Č.{r['mat']}")
+    P(IM(r'\sigma_{D(-1)}') + ' - динамичка чврстоћа на савијање или савојна динамичка издржљивост')
+    E(r'\sigma_{D(-1)} = «x» \div «y»' + Nmm2, x=r['sDr'][0], y=r['sDr'][1])
+    P('Усвајам: ' + IM(r'\sigma_{D(-1)} = «x»' + Nmm2, x=r['sD']))
+    P(IM(r'\tau_{D(0)}') + ' - увојна издржљивост при једносмјерној промјени напона')
+    E(r'\tau_{D(0)} = «x» \div «y»' + Nmm2, x=r['tDr'][0], y=r['tDr'][1])
+    P('Усвајам: ' + IM(r'\tau_{D(0)} = «x»' + Nmm2, x=r['tD']))
+    P(IM(r'\alpha_0') + ' - коефицијент')
+    E(r'\alpha_0 = \frac{\sigma_{D(-1)}}{\tau_{D(0)}} = \frac{«x»}{«y»} = «R»', x=r['sD'], y=r['tD'], R=M(r['a0']))
+    H(3, '1.3.1. Дозвољени напон савијања:')
+    E(r'\sigma_{sd} = \frac{\sigma_{D(-1)}}{S} = \frac{«x»}{4} = «R»' + Nmm2, x=r['sD'], R=M(r['ssd']))
+    H(3, '1.3.2. Дозвољени напон увијања:')
+    E(r'\tau_{ud} = \frac{\tau_{D(0)}}{S} = \frac{«x»}{3} = «R»' + Nmm2, x=r['tD'], R=M(r['tud']))
+
+    H(2, '1.4. МЈЕРОДАВАН МОМЕНТ ЗА ПРОРАЧУН ВРАТИЛА')
+    H(3, '1.4.1. Обртни момент (T) - момент увијања:')
+    E(r'T = \frac{P}{\omega}\cdot K_A = \frac{«P»\cdot 10^3}{«w»}\cdot «KA» = «T1»\ \mathrm{Nm} = «T2»' + Nmm,
+      P=M(inp['P']), w=M(r['w']), KA=M(inp['KA']), T1=M(r['TNm']), T2=M(r['T']))
+    H(4, '4.1.1. Угаона брзина на улазном вратилу:')
+    E(r'\omega_1 = \omega_{ul} = \frac{\pi\cdot n_{EM}}{30} = \frac{\pi\cdot «n»}{30} = «R»\ \mathrm{s^{-1}}', n=M(inp['n']), R=M(r['w']))
+    H(3, '1.4.2. Упоредни момент:')
+    a0, T = M(r['a0']), M(r['T'])
+    E(r'M_{is} = \sqrt{\left(M_{s_{S}}\right)^2 + \left(\frac{\alpha_0}{2}\cdot T\right)^2} = \sqrt{0^2 + \left(\frac{«a0»}{2}\cdot «T»\right)^2} = «R»' + Nmm, a0=a0, T=T, R=M(r['Mis']))
+    E(r'M_{iA} = \sqrt{\left(M_{s_A}\right)^2 + \left(\frac{\alpha_0}{2}\cdot T\right)^2} = \sqrt{0^2 + \left(\frac{«a0»}{2}\cdot «T»\right)^2} = «R»' + Nmm, a0=a0, T=T, R=M(r['Mis']))
+    E(r'M_{iz} = \sqrt{\left(«mn»\right)^2 + \left(\frac{\alpha_0}{2}\cdot T\right)^2} = \sqrt{\left(«x»\right)^2 + \left(\frac{«a0»}{2}\cdot «T»\right)^2} = «R»' + Nmm,
+      mn=mname, x=M(r['Mmax']), a0=a0, T=T, R=M(r['Miz']))
+
+    H(2, '1.5. ДИМЕНЗИОНИСАЊЕ ВРАТИЛА - I')
+    H(3, '1.5.1. Идеални пречници:')
+    E(r'd_{iA} = d_{iS} = \sqrt[3]{\frac{32\cdot M_{iA}}{\pi\cdot\sigma_{sd}}} = \sqrt[3]{\frac{32\cdot «x»}{\pi\cdot «s»}} = «R»' + mm,
+      x=M(r['Mis']), s=M(r['ssd']), R=M(r['dis']))
+    E(r'd_{iZ} = \sqrt[3]{\frac{32\cdot M_{iZ}}{\pi\cdot\sigma_{sd}}} = \sqrt[3]{\frac{32\cdot «x»}{\pi\cdot «s»}} = «R»' + mm,
+      x=M(r['Miz']), s=M(r['ssd']), R=M(r['diz']))
+    H(3, '1.5.2. Стварни пречници:')
+    P('Стварне пречнике вратила добићемо када идеалне пречнике повећамо за 20% и стандардизујемо их '
+      '(први већи стандардни пречник). Између пречника по редосљеду S – A – Z мора бити разлика од најмање 5 mm.')
+    E(r'ds_S = 1{,}2\cdot d_{iS} = 1{,}2\cdot «x» = «R»' + mm, x=M(r['dis']), R=M(r['dsS_c']))
+    P('Усвајам: ' + IM(r'ds_S = «R»' + mm, R=r['dS']))
+    E(r'ds_A = ds_B = 1{,}2\cdot d_{iA} = 1{,}2\cdot «x» = «R»' + mm + r'\quad\Rightarrow\quad ds_A \ge «m» + 5 = «k»' + mm,
+      x=M(r['dis']), R=M(r['dsS_c']), m=r['dS'], k=r['dS'] + 5)
+    P('Усвајам: ' + IM(r'ds_A = ds_B = «R»' + mm, R=r['dA']))
+    E(r'ds_Z = 1{,}2\cdot d_{iZ} = 1{,}2\cdot «x» = «R»' + mm + r'\quad\Rightarrow\quad ds_Z \ge «m» + 5 = «k»' + mm,
+      x=M(r['diz']), R=M(r['dsZ_c']), m=r['dA'], k=r['dA'] + 5)
     if r['dZ'] != r['dZ_rule']:
-        for dz, s, _ in r['tries'][:-1]:
-            L(f'      Sa {dz} mm stepen sigurnosti iznosi S = {f(s)} < 1,5 i ne zadovoljava (vidi provjeru u tački 3),')
-        L(f'      pa usvajam prvi veći standardni prečnik: ds_Z = {r["dZ"]} mm')
+        for i_, (dz, s_, _) in enumerate(r['tries'][:-1]):
+            P(f'Са {IM(r"ds_Z = «d»" + mm, d=dz)} степен сигурности износи {IM(r"S = «s» < 1{,}5", s=M(s_))} и НЕ ЗАДОВОЉАВА (тачка 3.0.{i_ + 1}).')
+        P('Усвајам први већи стандардни пречник: ' + IM(r'ds_Z = «R»' + mm, R=r['dZ']))
     else:
-        L(f'      Usvajam: ds_Z = {r["dZ"]} mm')
-    H('1.5.3. Prečnici vratila I', 2)
-    B(f'd_S = {r["dS"]} mm – prečnik vratila na mjestu spojnice')
-    B(f'd_A = d_B = {r["dA"]} mm – prečnici rukavaca na osloncima A i B (mjesta ležaja)')
-    B(f'd_Z = {r["dZ"]} mm – prečnik vratila na mjestu zupčanika')
+        P('Усвајам: ' + IM(r'ds_Z = «R»' + mm, R=r['dZ']))
+    H(3, '1.5.3. Пречници вратила I:')
+    box('Okvir',
+        IM(r'd_S = «x»' + mm, x=r['dS']) + ' - пречник вратила на мјесту спојнице.',
+        IM(r'd_A = d_B = «x»' + mm, x=r['dA']) + ' - пречници рукаваца на ослонцима A и B (тј. на мјестима лежаја).',
+        IM(r'd_Z = «x»' + mm, x=r['dZ']) + ' - пречник вратила на мјесту зупчаника.')
+
+    box('Naslov3', '3\\. ПРОВЈЕРА ВРАТИЛА И КЛИНА ИСПОД ЗУПЧАНИКА I')
+
+    def check_eqs(k, d):
+        E(r'W = \left(d - t\right)^3\cdot\frac{\pi}{32} = \left(«d» - «t»\right)^3\cdot\frac{\pi}{32} = «R»\ \mathrm{mm^3}', d=d, t=M(k['t']), R=M(k['W']))
+        return k
+
+    for i_, (dz, s_, k) in enumerate(r['tries'][:-1]):
+        H(3, f'3.0.{i_ + 1}. Провјера са d = {dz} mm:')
+        P(f"Из Табеле 10 (ред {k['krow']}): " + IM(r'b = «b»\ \mathrm{mm},\ h = «h»\ \mathrm{mm},\ t = «t»\ \mathrm{mm},\ r = «r»\ \mathrm{mm}',
+                                                      b=k['b'], h=k['h'], t=M(k['t']), r=M(k['r'])))
+        E(r'\frac{r}{t} = \frac{«r»}{«t»} = «R»\ \Rightarrow\ \alpha_K = «ak»', r=M(k['r']), t=M(k['t']), R=M(k['rt']), ak=M(k['ak']))
+        E(r'\beta_K = \left(\alpha_K - 1\right)\cdot\eta_K + 1 = \left(«ak» - 1\right)\cdot 0{,}65 + 1 = «R»', ak=M(k['ak']), R=M(k['bk']))
+        E(r'\xi_2 = «x2»,\quad \xi_1 = «x1»', x2=M(k['xi2']), x1=M(k['xi1']))
+        check_eqs(k, dz)
+        E(r'\sigma_S = \frac{M_S}{W} = \frac{«m»}{«w»} = «R»' + Nmm2, m=M(r['Mmax']), w=M(k['W']), R=M(k['ss']))
+        E(r'\tau_u = \frac{T}{2W} = \frac{«T»}{2\cdot «w»} = «R»' + Nmm2, T=T, w=M(k['W']), R=M(k['tu']))
+        E(r'S_\sigma = \frac{\sigma_{D(-1)}\cdot\xi_1\cdot\xi_2}{\beta_K\cdot\sigma_S} = \frac{«s»\cdot «x1»\cdot «x2»}{«bk»\cdot «ss»} = «R»',
+          s=r['sD'], x1=M(k['xi1']), x2=M(k['xi2']), bk=M(k['bk']), ss=M(k['ss']), R=M(k['Ss']))
+        E(r'S_\tau = \frac{\tau_{D(0)}\cdot\xi_1\cdot\xi_2}{\beta_K\cdot\tau_u} = \frac{«s»\cdot «x1»\cdot «x2»}{«bk»\cdot «tu»} = «R»',
+          s=r['tD'], x1=M(k['xi1']), x2=M(k['xi2']), bk=M(k['bk']), tu=M(k['tu']), R=M(k['St']))
+        E(r'S = \frac{S_\sigma\cdot S_\tau}{\sqrt{S_\sigma^2 + S_\tau^2}} = \frac{«a»\cdot «b»}{\sqrt{«a»^2 + «b»^2}} = «R»',
+          a=M(k['Ss']), b=M(k['St']), R=M(k['S']))
+        box('Crveno', IM(r'S = «s» < 1{,}5', s=M(k['S'])) + ' - НЕ ЗАДОВОЉАВА, па се пречник ' + IM('d_Z') + ' повећава на сљедећи стандардни пречник.')
+
     d = r['dZ']
-    H('3. PROVJERA VRATILA I KLINA ISPOD ZUPČANIKA I')
-    for n_, (dz, s_, k) in enumerate(r['tries'][:-1]):
-        H(f'3.0.{n_ + 1}. Provjera sa d_Z = {dz} mm', 2)
-        L(f'Klin iz Tabele 10 (red {k["krow"]}): b = {k["b"]} mm, h = {k["h"]} mm, t = {f(k["t"])} mm, r = {f(k["r"])} mm',
-          f'r/t = {f(k["r"])} / {f(k["t"])} = {f(k["rt"])}  →  α_K = {f(k["ak"])}',
-          f'β_K = (α_K − 1) · η_K + 1 = ({f(k["ak"])} − 1) · 0,65 + 1 = {f(k["bk"])}',
-          f'ξ₂ = {f(k["xi2"])},  ξ₁ = {f(k["xi1"])} (d = {dz} mm)',
-          f'W = (d − t)³ · π/32 = ({dz} − {f(k["t"])})³ · π/32 = {f(k["W"])} mm³',
-          f'σ_s = M_s / W = {f(r["Mmax"])} / {f(k["W"])} = {f(k["ss"])} N/mm²',
-          f'τ_u = T / (2W) = {f(r["T"])} / (2 · {f(k["W"])}) = {f(k["tu"])} N/mm²',
-          f'S_σ = (σ_D(−1) · ξ₁ · ξ₂) / (β_K · σ_s) = ({r["sD"]} · {f(k["xi1"])} · {f(k["xi2"])}) / ({f(k["bk"])} · {f(k["ss"])}) = {f(k["Ss"])}',
-          f'S_τ = (τ_D(0) · ξ₁ · ξ₂) / (β_K · τ_u) = ({r["tD"]} · {f(k["xi1"])} · {f(k["xi2"])}) / ({f(k["bk"])} · {f(k["tu"])}) = {f(k["St"])}',
-          f'S = (S_σ · S_τ) / √(S_σ² + S_τ²) = ({f(k["Ss"])} · {f(k["St"])}) / √({f(k["Ss"])}² + {f(k["St"])}²) = {f(k["S"])}')
-        B(f'S = {f(k["S"])} < 1,5 → NE ZADOVOLJAVA, pa se prečnik d_Z povećava na sljedeći standardni prečnik.')
-    H(f'3.1. Prečnik vratila na mjestu zupčanika I: d = {d} mm', 2)
-    L(f'Iz Tabele 10 – normalni klinovi (red {r["krow"]}):', f'b = {r["b"]} mm', f'h = {r["h"]} mm',
-      f't = {f(r["t"])} mm', f'r = {f(r["r"])} mm', f't/d = {f(r["t"])} / {d} = {f(r["td"])}',
-      f'r/t = {f(r["r"])} / {f(r["t"])} = {f(r["rt"])}',
-      f'R_m = {r["Rmr"][0]} ÷ {r["Rmr"][1]} N/mm² za Č.{r["mat"]} (Tabela 11) → usvajam R_m = {r["Rm"]} N/mm²')
-    H('3.2. Geometrijski faktor koncentracije napona', 2)
-    L(f'α_K = {f(r["ak"])} (Slika 4, za r/t = {f(r["rt"])})',
-      'η_K = 0,65 – faktor osjetljivosti materijala na koncentraciju (η_K = 0,5 ÷ 1)',
-      f'β_K = (α_K − 1) · η_K + 1 = ({f(r["ak"])} − 1) · 0,65 + 1 = {f(r["bk"])}')
-    H('3.3. Faktor hrapavosti površina', 2)
-    L(f'ξ₂ = {f(r["xi2"])} (Slika 5, za R_m = {r["Rm"]} N/mm²)')
-    H('3.4. Faktor veličine presjeka', 2)
-    vr = 'legirani' if r['alloyed'] else 'ugljenični'
-    L(f'ξ₁ = {f(r["xi1"])} (Tabela 12, savijanje, {vr} čelici, d = {d} mm)')
-    H('3.5. Otporni moment presjeka', 2)
-    L(f'W = (d − t)³ · π/32 = ({d} − {f(r["t"])})³ · π/32 = {f(r["W"])} mm³')
-    H('3.6. Napon savijanja', 2)
-    L(f'σ_s = M_s / W = {f(r["Mmax"])} / {f(r["W"])} = {f(r["ss"])} N/mm²   (uzima se najveći rezultujući moment savijanja)')
-    H('3.7. Napon uvijanja', 2)
-    L(f'τ_u = T / W_p = T / (2W) = {f(r["T"])} / (2 · {f(r["W"])}) = {f(r["tu"])} N/mm²')
-    H('3.8. Stepen sigurnosti', 2)
-    L(f'S_σ = (σ_D(−1) · ξ₁ · ξ₂) / (β_K · σ_s) = ({r["sD"]} · {f(r["xi1"])} · {f(r["xi2"])}) / ({f(r["bk"])} · {f(r["ss"])}) = {f(r["Ss"])}',
-      f'S_τ = (τ_D(0) · ξ₁ · ξ₂) / (β_K · τ_u) = ({r["tD"]} · {f(r["xi1"])} · {f(r["xi2"])}) / ({f(r["bk"])} · {f(r["tu"])}) = {f(r["St"])}',
-      f'S = (S_σ · S_τ) / √(S_σ² + S_τ²) = ({f(r["Ss"])} · {f(r["St"])}) / √({f(r["Ss"])}² + {f(r["St"])}²) = {f(r["S"])}',
-      '– što zadovoljava jer S treba da bude: S = 1,5 ÷ 3' if r['S'] <= 3 else
-      '– S je veći od 3: vratilo je predimenzionisano, ali zadovoljava uslov čvrstoće')
-    H('3.9. Mjere klina', 2)
-    L(f'Za prečnik vratila d = {d} mm mjere klina iznose: {r["b"]} x {r["h"]} x {r["kl"]} – JUS M.C2.060',
-      f'Usvajam standardnu dužinu klina: l = {r["kl"]} mm (tabela: d = {r["klrow"].replace("–", " ÷ ")} → l = {r["kl"]} mm)')
-    H('3.10. Dubina žljeba', 2)
-    L(f'Dubina žljeba u vratilu: t = {f(r["t"])} mm',
-      f'Dubina žljeba u glavčini: t₁ = h − t = {r["h"]} − {f(r["t"])} = {f(r["t1"])} mm')
-    H('3.11. Korisna dužina klina', 2)
-    L(f'l_K = l − b = {r["kl"]} − {r["b"]} = {r["lk"]} mm')
-    H('3.12. Obimna sila na klinu', 2)
-    L(f'T bez K_A: T₀ = P / ω₁ = {f(inp["P"] * 1000)} / {f(r["w"])} = {f(r["T0Nm"])} Nm = {f(r["T0"])} Nmm',
-      f'F_tK = 2 · T₀ · K_A / d = 2 · {f(r["T0"])} · {f(inp["KA"])} / {d} = {f(r["Ftk"])} N')
-    H('3.13. Površinski pritisak', 2)
-    L(f'p = F_tK / (l_K · t₁) = {f(r["Ftk"])} / ({r["lk"]} · {f(r["t1"])}) = {f(r["p"])} N/mm²')
-    H('3.14. Provjera', 2)
-    L(f'p = {f(r["p"])} N/mm² < 100 N/mm² → površinski pritisak zadovoljava (glavčina od čelika, p_d = 75 ÷ 100 N/mm²).' if r['p'] < 100 else
-      f'p = {f(r["p"])} N/mm² > 100 N/mm² → NE ZADOVOLJAVA!')
+    H(3, f'3.1. Пречник вратила на мјесту зупчаника I: d = {d} mm')
+    P('Из Табеле 10. - нормални клинови:')
+    E(r'b = «x»' + mm, x=r['b']); E(r'h = «x»' + mm, x=r['h']); E(r't = «x»' + mm, x=M(r['t'])); E(r'r = «x»' + mm, x=M(r['r']))
+    E(r'\frac{t}{d} = \frac{«t»}{«d»} = «R»', t=M(r['t']), d=d, R=M(r['td']))
+    E(r'\frac{r}{t} = \frac{«r»}{«t»} = «R»', r=M(r['r']), t=M(r['t']), R=M(r['rt']))
+    P(IM(r'R_m = \left(«x» \div «y»\right)' + Nmm2, x=r['Rmr'][0], y=r['Rmr'][1]) + f" - за Č.{r['mat']} из Табеле 11. - затезна чврстоћа; усвајам "
+      + IM(r'R_m = «x»' + Nmm2, x=r['Rm']))
+    H(3, '3.2. Геометријски фактор концентрације напона:')
+    E(r'\beta_K = \left(\alpha_K - 1\right)\cdot\eta_K + 1')
+    E(r'\beta_K = \left(«ak» - 1\right)\cdot 0{,}65 + 1 = «R»', ak=M(r['ak']), R=M(r['bk']))
+    P(IM(r'\alpha_K = «x»', x=M(r['ak'])) + ' - (Слика 4.)')
+    P(IM(r'\eta_K = 0{,}65') + ' - фактор осјетљивости материјала на концентрацију ' + IM(r'\left(\eta_K = 0{,}5 \div 1\right)'))
+    H(3, '3.3. Фактор храпавости површина:')
+    P(IM(r'\xi_2 = «x»', x=M(r['xi2'])) + ' - са Слике 5.')
+    H(3, '3.4. Фактор величине пресјека:')
+    P(IM(r'\xi_1 = «x»', x=M(r['xi1'])) + ' - Табела 12.')
+    H(3, '3.5. Отпорни момент пресјека:')
+    E(r'W = \left(d - t\right)^3\cdot\frac{\pi}{32} = \left(«d» - «t»\right)^3\cdot\frac{\pi}{32} = «R»\ \mathrm{mm^3}', d=d, t=M(r['t']), R=M(r['W']))
+    H(3, '3.6. Напон савијања:')
+    E(r'\sigma_S = \frac{M_S}{W} = \frac{«m»}{«w»} = «R»' + Nmm2, m=M(r['Mmax']), w=M(r['W']), R=M(r['ss']))
+    P('\\- усваја се највећи резултујући момент савијања из тачке 1.2.2.')
+    H(3, '3.7. Напон увијања:')
+    E(r'\tau_u = \frac{T}{W_p} = \frac{T}{2W} = \frac{«T»}{2\cdot «w»} = «R»' + Nmm2, T=T, w=M(r['W']), R=M(r['tu']))
+    H(3, '3.8. Степен сигурности:')
+    E(r'S_\sigma = \frac{\sigma_{D(-1)}\cdot\xi_1\cdot\xi_2}{\beta_K\cdot\sigma_S} = \frac{«s»\cdot «x1»\cdot «x2»}{«bk»\cdot «ss»} = «R»',
+      s=r['sD'], x1=M(r['xi1']), x2=M(r['xi2']), bk=M(r['bk']), ss=M(r['ss']), R=M(r['Ss']))
+    E(r'S_\tau = \frac{\tau_{D(0)}\cdot\xi_1\cdot\xi_2}{\beta_K\cdot\tau_u} = \frac{«s»\cdot «x1»\cdot «x2»}{«bk»\cdot «tu»} = «R»',
+      s=r['tD'], x1=M(r['xi1']), x2=M(r['xi2']), bk=M(r['bk']), tu=M(r['tu']), R=M(r['St']))
+    E(r'S = \frac{S_\sigma\cdot S_\tau}{\sqrt{S_\sigma^2 + S_\tau^2}} = \frac{«a»\cdot «b»}{\sqrt{«a»^2 + «b»^2}} = «R»',
+      a=M(r['Ss']), b=M(r['St']), R=M(r['S']))
+    P('\\- што задовољава јер S треба да буде: ' + IM(r'S = 1{,}5 \div 3') if r['S'] <= 3 else
+      '\\- S је веће од 3: вратило задовољава услов чврстоће, али је предимензионисано.')
+    H(3, f"3.9. За пречник вратила d = {d} mm мјере клина износе: {r['b']} x {r['h']} x {r['kl']} - JUS M.C2.060")
+    P(f"Усвајам стандардну дужину клина: l = {r['kl']} mm (за d = {r['klrow'].replace('–', ' - ')} mm).")
+    H(3, '3.10. Дубина жљеба у вратилу: ' + f"t = {fmt(r['t'])} mm")
+    P('а дубина жљеба у главчини: ' + IM(r't_1 = h - t = «h» - «t» = «R»' + mm, h=r['h'], t=M(r['t']), R=M(r['t1'])))
+    H(3, '3.11. Корисна дужина клина:')
+    E(r'l_K = l - b = «l» - «b» = «R»' + mm, l=r['kl'], b=r['b'], R=r['lk'])
+    H(3, '3.12. Обимна сила на клину:')
+    E(r'F_{tK} = \frac{2\cdot T\cdot K_A}{d} = \frac{2\cdot «T0»\cdot «KA»}{«d»} = «R»' + U, T0=M(r['T0']), KA=M(inp['KA']), d=d, R=M(r['Ftk']))
+    P('(овдје је ' + IM(r'T = \frac{P}{\omega_1} = \frac{«P»}{«w»} = «T0»' + Nmm, P=M(inp['P'] * 1000), w=M(r['w']), T0=M(r['T0'])) + ' без фактора ' + IM('K_A') + ')')
+    H(3, '3.13. Површински притисак:')
+    E(r'p = \frac{F_{tK}}{l_K\cdot t_1} = \frac{«F»}{«l»\cdot «t»} = «R»' + Nmm2, F=M(r['Ftk']), l=r['lk'], t=M(r['t1']), R=M(r['p']))
+    if r['p'] < 100:
+        H(3, '3.14. Површински притисак задовољава јер је за главчине од челика:')
+        E(r'p_d = 75 \div 100' + Nmm2)
+    else:
+        box('Crveno', '3.14. Површински притисак НЕ ЗАДОВОЉАВА (p ≥ 100 N/mm²).')
+
+    with tempfile.TemporaryDirectory() as td:
+        src = os.path.join(td, 'p.md'); tmp = os.path.join(td, 'p.docx')
+        open(src, 'w', encoding='utf-8').write('\n\n'.join(md) + '\n')
+        subprocess.run(['pandoc', src, '-f', 'markdown+tex_math_dollars', '-o', tmp], check=True)
+        D = docx.Document(tmp)
+
+    RED = RGBColor(0xC0, 0, 0)
+    MNS = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+    from lxml import etree
+    word = re.compile(r'^[\w,]+$')
+    def rt(e):
+        if e is None or e.tag != f'{{{MNS}}}r': return None
+        t = e.find(f'{{{MNS}}}t'); return t.text if t is not None else None
+    for parent in list(D.element.body.iter()):
+        kids = list(parent)
+        i = 0
+        while i + 2 < len(kids):
+            x, c, y = rt(kids[i]), rt(kids[i + 1]), rt(kids[i + 2])
+            if x and c == ',' and y and x[-1].isdigit() and y[0].isdigit():
+                kids[i].find(f'{{{MNS}}}t').text = x + ',' + y
+                parent.remove(kids[i + 1]); parent.remove(kids[i + 2]); del kids[i + 1:i + 3]
+                continue
+            i += 1
+    for parent in D.element.body.iter():
+        prev = None
+        for ch in list(parent):
+            if ch.tag != f'{{{MNS}}}r':
+                prev = None; continue
+            t = ch.find(f'{{{MNS}}}t'); rp = ch.find(f'{{{MNS}}}rPr')
+            key = etree.tostring(rp) if rp is not None else b''
+            if prev is not None and t is not None and t.text and word.match(t.text) and prev[1] == key:
+                prev[0].text += t.text; parent.remove(ch); continue
+            prev = (t, key) if (t is not None and t.text and word.match(t.text)) else None
+
+    def border(p_or_style_el, color='C00000', sz=12):
+        pPr = p_or_style_el.get_or_add_pPr()
+        b = OxmlElement('w:pBdr')
+        for side in ('top', 'left', 'bottom', 'right'):
+            e = OxmlElement(f'w:{side}'); e.set(qn('w:val'), 'single'); e.set(qn('w:sz'), str(sz))
+            e.set(qn('w:space'), '4'); e.set(qn('w:color'), color); b.append(e)
+        pPr.append(b)
+
+    byname = {x.name.lower(): x for x in D.styles}
+    for nm in ('normal', 'body text', 'first paragraph'):
+        if nm in byname:
+            byname[nm].font.name = 'Calibri'; byname[nm].font.size = Pt(12)
+    for nm, size in (('heading 2', 13), ('heading 3', 12), ('heading 4', 12)):
+        if nm in byname:
+            s = byname[nm]; s.font.color.rgb = RGBColor(0, 0, 0); s.font.bold = True; s.font.size = Pt(size); s.font.name = 'Calibri'
+            if nm == 'heading 2': s.font.underline = True
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    for p in D.paragraphs:
+        sn = p.style.name
+        if sn in ('Naslov', 'NaslovOkvir'):
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for run in p.runs: run.font.size = Pt(26 if sn == 'Naslov' else 18); run.font.bold = sn == 'NaslovOkvir'; run.font.color.rgb = RED
+        if sn == 'NaslovOkvir':
+            border(p._p); p.paragraph_format.left_indent = Pt(160); p.paragraph_format.right_indent = Pt(160)
+        if sn == 'Okvir':
+            border(p._p); p.paragraph_format.space_after = Pt(0)
+        if sn == 'Naslov3':
+            for run in p.runs: run.font.size = Pt(15); run.font.bold = True; run.font.color.rgb = RED; run.font.underline = True
+        if sn == 'Crveno':
+            for run in p.runs: run.font.bold = True; run.font.color.rgb = RED
+        if sn == 'Desno':
+            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     D.save(out)
 
 

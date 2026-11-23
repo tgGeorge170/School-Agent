@@ -43,10 +43,12 @@ EOF
 python3 $S/grafrad.py <scratchpad>/<ime>/ulaz.json <scratchpad>/<ime>/izlaz
 ```
 
-Treba `python-docx` i `matplotlib` (`pip install python-docx matplotlib` ako fale).
+Treba `pandoc`, `python-docx` i `matplotlib` (`pip install python-docx matplotlib` ako fale).
 Skripta pravi u `izlaz/`:
 - `<Ime_Prezime>_obrazac.docx` – obrazac iz `assets/obrazac.docx`, samo brojevi bez jedinica
-- `<Ime_Prezime>_proracun.docx` – formula → uvrštene vrijednosti → rezultat, za prepisivanje u svesku
+- `<Ime_Prezime>_proracun.docx` – kao školski primjer: ćirilica, isti redoslijed tačaka (1.1–1.5, pa 3.1–3.14; T pa ω u 4.1.1),
+  prave Word formule (razlomci, korijeni), crveni okvir oko usvojenih prečnika, bez tabela i slika.
+  Pravi se preko `pandoc` (markdown + LaTeX → docx).
 - `<Ime_Prezime>_crtez.pdf` – radionički crtež A3 (+ `preview.png` za provjeru)
 - `rezultati.json` – sve izračunate vrijednosti
 
