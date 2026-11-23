@@ -146,7 +146,7 @@ def calc(inp):
     dZ = r['dZ_rule']
     while True:
         k = check(r, dZ, alloyed)
-        r['tries'].append((dZ, k['S']))
+        r['tries'].append((dZ, k['S'], k))
         if k['S'] >= 1.5: break
         dZ = next_std(dZ + 0.5)
     r['dZ'] = dZ; r.update(k)
@@ -304,8 +304,8 @@ def steps_doc(inp, r, out):
       f'      Usvajam: ds_A = ds_B = {r["dA"]} mm',
       f'ds_Z = 1,2 · d_iZ = 1,2 · {f(r["diz"])} = {f(r["dsZ_c"])} mm  →  mora biti ≥ {r["dA"]} + 5 = {r["dA"] + 5} mm')
     if r['dZ'] != r['dZ_rule']:
-        for dz, s in r['tries'][:-1]:
-            L(f'      Sa {dz} mm stepen sigurnosti iznosi S = {f(s)} < 1,5 i ne zadovoljava,')
+        for dz, s, _ in r['tries'][:-1]:
+            L(f'      Sa {dz} mm stepen sigurnosti iznosi S = {f(s)} < 1,5 i ne zadovoljava (vidi provjeru u tački 3),')
         L(f'      pa usvajam prvi veći standardni prečnik: ds_Z = {r["dZ"]} mm')
     else:
         L(f'      Usvajam: ds_Z = {r["dZ"]} mm')
@@ -315,6 +315,19 @@ def steps_doc(inp, r, out):
     B(f'd_Z = {r["dZ"]} mm – prečnik vratila na mjestu zupčanika')
     d = r['dZ']
     H('3. PROVJERA VRATILA I KLINA ISPOD ZUPČANIKA I')
+    for n_, (dz, s_, k) in enumerate(r['tries'][:-1]):
+        H(f'3.0.{n_ + 1}. Provjera sa d_Z = {dz} mm', 2)
+        L(f'Klin iz Tabele 10 (red {k["krow"]}): b = {k["b"]} mm, h = {k["h"]} mm, t = {f(k["t"])} mm, r = {f(k["r"])} mm',
+          f'r/t = {f(k["r"])} / {f(k["t"])} = {f(k["rt"])}  →  α_K = {f(k["ak"])}',
+          f'β_K = (α_K − 1) · η_K + 1 = ({f(k["ak"])} − 1) · 0,65 + 1 = {f(k["bk"])}',
+          f'ξ₂ = {f(k["xi2"])},  ξ₁ = {f(k["xi1"])} (d = {dz} mm)',
+          f'W = (d − t)³ · π/32 = ({dz} − {f(k["t"])})³ · π/32 = {f(k["W"])} mm³',
+          f'σ_s = M_s / W = {f(r["Mmax"])} / {f(k["W"])} = {f(k["ss"])} N/mm²',
+          f'τ_u = T / (2W) = {f(r["T"])} / (2 · {f(k["W"])}) = {f(k["tu"])} N/mm²',
+          f'S_σ = (σ_D(−1) · ξ₁ · ξ₂) / (β_K · σ_s) = ({r["sD"]} · {f(k["xi1"])} · {f(k["xi2"])}) / ({f(k["bk"])} · {f(k["ss"])}) = {f(k["Ss"])}',
+          f'S_τ = (τ_D(0) · ξ₁ · ξ₂) / (β_K · τ_u) = ({r["tD"]} · {f(k["xi1"])} · {f(k["xi2"])}) / ({f(k["bk"])} · {f(k["tu"])}) = {f(k["St"])}',
+          f'S = (S_σ · S_τ) / √(S_σ² + S_τ²) = ({f(k["Ss"])} · {f(k["St"])}) / √({f(k["Ss"])}² + {f(k["St"])}²) = {f(k["S"])}')
+        B(f'S = {f(k["S"])} < 1,5 → NE ZADOVOLJAVA, pa se prečnik d_Z povećava na sljedeći standardni prečnik.')
     H(f'3.1. Prečnik vratila na mjestu zupčanika I: d = {d} mm', 2)
     L(f'Iz Tabele 10 – normalni klinovi (red {r["krow"]}):', f'b = {r["b"]} mm', f'h = {r["h"]} mm',
       f't = {f(r["t"])} mm', f'r = {f(r["r"])} mm', f't/d = {f(r["t"])} / {d} = {f(r["td"])}',
@@ -627,7 +640,7 @@ def main():
     keys = ['FAH', 'FBH', 'FAV', 'FA', 'FB', 'Ml', 'Md', 'T', 'Miz', 'dis', 'diz', 'dS', 'dA', 'dZ_rule', 'dZ', 'b', 'h', 't',
             'xi1', 'xi2', 'W', 'Ss', 'St', 'S', 'kl', 'Ftk', 'p']
     for k in keys: print(k, r[k])
-    print('S po pokusaju:', r['tries']); print('crtez:', g)
+    print('S po pokusaju:', [(a, b) for a, b, _ in r['tries']]); print('crtez:', g)
 
 
 if __name__ == '__main__':
