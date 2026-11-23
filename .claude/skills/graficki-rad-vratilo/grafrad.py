@@ -459,7 +459,10 @@ def drawing(inp, r, out_pdf, out_png):
     sc = 1.0 if Ltot <= 310 and dC <= 75 else (1 / 1.5 if Ltot <= 465 else 0.5)
     scale_txt = {1.0: '1:1', 1 / 1.5: '1:1,5', 0.5: '1:2'}[sc]
     S = lambda v: v * sc
-    X0 = 78 + (310 - S(Ltot)) / 2; AY = 200
+    import random
+    rng = random.Random(inp.get('ime')) if inp.get('ime') else None
+    V = lambda d, lo, hi: d if rng is None else rng.uniform(lo, hi)
+    X0 = 78 + (310 - S(Ltot)) / 2; AY = V(200, 196, 204)
     xs = [X0]
     for d, l in segs: xs.append(xs[-1] + S(l))
     XE = xs[-1]; CH = S(2)
@@ -513,14 +516,14 @@ def drawing(inp, r, out_pdf, out_png):
 
     chole(X0, 1); chole(XE, -1)
     RT = S(dC / 2)
-    Y1, Y2 = AY - RT - 20, AY - RT - 32
+    Y1 = AY - RT - V(20, 18, 24); Y2 = Y1 - V(12, 11, 14)
     for i in range(5):
         x1, x2 = xs[i], xs[i + 1]
         r1 = AY - S(segs[i][0] / 2) if i == 0 else None
         r2 = AY - S(max(segs[i][0], segs[i + 1][0]) / 2) if i < 4 else AY - re + CH
         hdim(x1, x2, Y1, fmt(segs[i][1]), r1, r2)
     hdim(X0, XE, Y2, fmt(Ltot), AY - r0 + CH, AY - re + CH)
-    YA = AY + RT + 17
+    YA = AY + RT + V(17, 15, 20)
     L(X0, AY + r0 - CH + 1, X0, YA + 2); L(S1a, AY + 1, S1a, YA + 2); L(S1b, AY + 1, S1b, YA + 2)
     hdim(X0, S1a, YA, None, outside=True); T(X0 - 6, YA + 0.8, '5'); hdim(S1a, S1b, YA, fmt(r['klS']))
     L(xs[2], AY + S(dZ / 2) + 2, xs[2], YA + 2); L(S2a, AY + 1, S2a, YA + 2); L(S2b, AY + 1, S2b, YA + 2)
@@ -536,19 +539,19 @@ def drawing(inp, r, out_pdf, out_png):
         tpos = AY + (rb + rr) / 2 if b else AY + max(rr / 2, w / 2 + 1.5)
         vdim(AY - rr, AY + rr, x, txt, tpos=tpos)
 
-    dia(X0 + S(LS) / 2, dS, r['bS'], f'Ø{dS}m6')
-    dia(xs[1] + S(LA) * 0.3, dA, 0, f'Ø{dA}k6')
-    dia(xs[2] + S(LZ) / 2, dZ, r['b'], f'Ø{dZ}m6')
+    dia(X0 + S(LS) * V(.5, .4, .6), dS, r['bS'], f'Ø{dS}m6')
+    dia(xs[1] + S(LA) * V(.3, .2, .45), dA, 0, f'Ø{dA}k6')
+    dia(xs[2] + S(LZ) * V(.5, .42, .6), dZ, r['b'], f'Ø{dZ}m6')
     dia((xs[3] + xs[4]) / 2, dC, 0, f'Ø{dC}')
-    dia(xs[4] + S(seat) / 2, dA, 0, f'Ø{dA}k6')
-    leader(X0 + S(2.5), AY + S(3.2), X0 - 6, AY + r0 * 0.5 + 6, 'A4 JUS M.A5.210', side='left')
-    leader(XE - S(2.5), AY + S(3.2), XE - 8, AY + RT + 9, 'A4 JUS M.A5.210', side='left')
-    leader(X0 + CH / 2, AY - r0 + CH / 2, X0 - 8, AY - r0 - 8, '2/45°', side='left')
-    leader(XE - CH / 2, AY - re + CH / 2, XE + 4, AY - re - 13, '2/45°', side='right')
+    dia(xs[4] + S(seat) * V(.5, .4, .6), dA, 0, f'Ø{dA}k6')
+    leader(X0 + S(2.5), AY + S(3.2), X0 - V(6, 4, 10), AY + r0 * 0.5 + V(6, 4, 12), 'A4 JUS M.A5.210', side='left')
+    leader(XE - S(2.5), AY + S(3.2), XE - V(8, 6, 12), AY + RT + V(9, 7, 13), 'A4 JUS M.A5.210', side='left')
+    leader(X0 + CH / 2, AY - r0 + CH / 2, X0 - V(8, 6, 12), AY - r0 - V(8, 6, 12), '2/45°', side='left')
+    leader(XE - CH / 2, AY - re + CH / 2, XE + V(4, 3, 6), AY - re - V(13, 9, 15), '2/45°', side='right')
     for i, side, dx, dy in ((1, 'right', 10, 11), (2, 'left', -10, 12), (3, 'left', -10, 12), (4, 'right', 8, 18)):
         rmin = S(min(segs[i - 1][0], segs[i][0]) / 2)
         xx = xs[i] + (S(0.6) if segs[i][0] < segs[i - 1][0] else -S(0.6))
-        leader(xx, AY - rmin - S(1), xs[i] + dx, AY - rmin - dy, f'R{Rf[i]}', side=side)
+        leader(xx, AY - rmin - S(1), xs[i] + dx * V(1, .8, 1.3), AY - rmin - dy * V(1, .85, 1.25), f'R{Rf[i]}', side=side)
 
     def cut(x, rr, letter):
         for sg in (1, -1):
@@ -556,9 +559,9 @@ def drawing(inp, r, out_pdf, out_png):
             L(x, a_, x, b_, 'thick'); L(x, b_, x - 7, b_); arrow(x - 7, b_, -1, 0)
             T(x - 10, b_ + (0.8 if sg > 0 else -4.6), letter, size=12)
 
-    cut(xs[2] + S(LZ) * 0.3, S(dZ / 2), 'A'); cut(X0 + S(LS) * 0.28, S(dS / 2), 'B')
-    rough(X0 + S(LS) * 0.72, AY + r0, 'N7'); rough(xs[1] + S(LA) * 0.62, AY + S(dA / 2), 'N6')
-    rough(xs[2] + S(LZ) * 0.72, AY + S(dZ / 2), 'N7'); rough(xs[4] + S(4), AY + re, 'N6')
+    cut(xs[2] + S(LZ) * V(.3, .22, .35), S(dZ / 2), 'A'); cut(X0 + S(LS) * V(.28, .2, .34), S(dS / 2), 'B')
+    rough(X0 + S(LS) * V(.72, .66, .8), AY + r0, 'N7'); rough(xs[1] + S(LA) * V(.62, .55, .78), AY + S(dA / 2), 'N6')
+    rough(xs[2] + S(LZ) * V(.72, .66, .8), AY + S(dZ / 2), 'N7'); rough(xs[4] + S(4), AY + re, 'N6')
 
     def section(cx, cy, Dd, b, t, label):
         Rr, bb, tt = S(Dd / 2), S(b), S(t); al = math.asin(bb / 2 / Rr)
@@ -574,9 +577,13 @@ def drawing(inp, r, out_pdf, out_png):
              yr1=cy - bb / 2, yr2=cy)
         rough_leader(cx - Rr + tt, cy + min(2.5, bb / 4), cx - Rr - 4, cy + max(Rr - 2, bb / 2 + textw(f'{b}P8') + 8), 'N8')
 
-    cyS = min(84, Y2 - 12 - S(dZ / 2) - 8)
-    section(100, cyS, dS, r['bS'], r['tS'], 'B-B')
-    section(min(max(190, 100 + S(dS / 2) + S(dZ / 2) + 40), 222 - S(dZ / 2)), cyS, dZ, r['b'], r['t'], 'A-A')
+    cyS = min(V(84, 78, 86), Y2 - 12 - S(dZ / 2) - 8)
+    secs = [(dS, r['bS'], r['tS'], 'B-B'), (dZ, r['b'], r['t'], 'A-A')]
+    if rng is not None and rng.random() < 0.5: secs.reverse()
+    RL, RR = S(secs[0][0] / 2), S(secs[1][0] / 2)
+    cL = max(100, RL + 45) + V(0, -3, 8)
+    cR = min(max(190, cL + RL + RR + 40) + V(0, 0, 10), 222 - RR)
+    section(cL, cyS, *secs[0]); section(cR, cyS, *secs[1])
 
     rows = [(f"{r['bS']}P8", *dev(P8, r['bS'])), (f"{r['b']}P8", *dev(P8, r['b'])), (f'Ø{dS}m6', *dev(M6, dS)),
             (f'Ø{dA}k6', *dev(K6, dA)), (f'Ø{dZ}m6', *dev(M6, dZ))]
@@ -587,7 +594,7 @@ def drawing(inp, r, out_pdf, out_png):
         ax.add_patch(plt.Rectangle((38, y - 5), 15, 5, fill=False, lw=TN)); ax.add_patch(plt.Rectangle((38, y - 10), 15, 5, fill=False, lw=TN))
         T(29, y - 5, n_, size=8.5, va='center'); T(45.5, y - 2.5, sd(u), size=8, va='center'); T(45.5, y - 7.5, sd(lo), size=8, va='center')
 
-    gx, gy = 318, 74
+    gx, gy = V(318, 296, 330), V(74, 70, 82)
     rough(gx, gy, 'N9'); T(gx + 7, gy + 1, '(', size=20, ha='left')
     for i, nn in enumerate(['N6', 'N7', 'N8']): rough(gx + 15 + i * 11, gy, nn)
     T(gx + 45, gy + 1, ')', size=20, ha='left')

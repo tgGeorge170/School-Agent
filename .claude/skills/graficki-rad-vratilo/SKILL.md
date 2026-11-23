@@ -92,6 +92,10 @@ Ako korisnik kaže da se nešto promijenilo, izmijeni skriptu.
   - Ležaj A: na Ø_A dijelu, isto l₁/2 od sredine zupčanika.
   - R2 na prelazima, R1 uz ležajeve.
   - Razmjera 1:1, a 1:1,5 ili 1:2 ako vratilo ne stane.
+- Da crteži drugara ne izgledaju isto, skripta prema imenu učenika malo pomjera položaj kota,
+  presjeka, oznaka hrapavosti i strelica, a ponekad zamijeni redoslijed presjeka A‑A i B‑B.
+  Mjere i geometrija se ne mijenjaju. Isto ime uvijek daje isti crtež, a bez imena raspored
+  je osnovni.
 
 ## 4. Provjeri prije slanja (obavezno)
 
