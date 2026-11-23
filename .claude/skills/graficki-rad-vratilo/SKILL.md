@@ -45,9 +45,9 @@ python3 $S/grafrad.py <scratchpad>/<ime>/ulaz.json <scratchpad>/<ime>/izlaz
 
 Treba `python-docx` i `matplotlib` (`pip install python-docx matplotlib` ako fale).
 Skripta pravi u `izlaz/`:
-- `Graficki_rad_1_obrazac_<ime>.docx` – obrazac iz `assets/obrazac.docx`, samo brojevi bez jedinica
-- `Proracun_vratilo_I_<ime>.docx` – formula → uvrštene vrijednosti → rezultat, za prepisivanje u svesku
-- `Vratilo_I_crtez_<ime>.pdf` – radionički crtež A3 (+ `preview.png` za provjeru)
+- `<Ime_Prezime>_obrazac.docx` – obrazac iz `assets/obrazac.docx`, samo brojevi bez jedinica
+- `<Ime_Prezime>_proracun.docx` – formula → uvrštene vrijednosti → rezultat, za prepisivanje u svesku
+- `<Ime_Prezime>_crtez.pdf` – radionički crtež A3 (+ `preview.png` za provjeru)
 - `rezultati.json` – sve izračunate vrijednosti
 
 ## 3. Pravila koja skripta primjenjuje (iz bilješki sa časa)
@@ -108,7 +108,7 @@ Ako korisnik kaže da se nešto promijenilo, izmijeni skriptu.
 
 ## 5. Predaja
 
-- Spakuj tri fajla u `Graficki_rad_1_<ime>.zip` i pošalji ZIP i svaki fajl posebno (SendUserFile).
+- Spakuj tri fajla u `<Ime_Prezime>_graficki_rad_1.zip` (u folderu `<Ime_Prezime>_graficki_rad_1/`) i pošalji ZIP i svaki fajl posebno (SendUserFile).
 - U chatu daj kratku tabelu glavnih rezultata: F_A, F_B, Mᵈ_sz, T, d_S / d_A / d_Z, klin, S, p.
 - Napomeni šta je pretpostavljeno: dužine na crtežu, ξ₂ očitan sa dijagrama i eventualno
   povećan d_Z.

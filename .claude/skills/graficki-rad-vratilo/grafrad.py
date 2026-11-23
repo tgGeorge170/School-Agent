@@ -639,9 +639,9 @@ def main():
     out = sys.argv[2]; os.makedirs(out, exist_ok=True)
     r = calc(inp)
     tag = inp.get('ime', '').replace(' ', '_') or 'ucenik'
-    fill_form(inp, r, os.path.join(out, f'Graficki_rad_1_obrazac_{tag}.docx'))
-    steps_doc(inp, r, os.path.join(out, f'Proracun_vratilo_I_{tag}.docx'))
-    g = drawing(inp, r, os.path.join(out, f'Vratilo_I_crtez_{tag}.pdf'), os.path.join(out, 'preview.png'))
+    fill_form(inp, r, os.path.join(out, f'{tag}_obrazac.docx'))
+    steps_doc(inp, r, os.path.join(out, f'{tag}_proracun.docx'))
+    g = drawing(inp, r, os.path.join(out, f'{tag}_crtez.pdf'), os.path.join(out, 'preview.png'))
     r['crtez'] = g
     json.dump(r, open(os.path.join(out, 'rezultati.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
     keys = ['FAH', 'FBH', 'FAV', 'FA', 'FB', 'Ml', 'Md', 'T', 'Miz', 'dis', 'diz', 'dS', 'dA', 'dZ_rule', 'dZ', 'b', 'h', 't',
